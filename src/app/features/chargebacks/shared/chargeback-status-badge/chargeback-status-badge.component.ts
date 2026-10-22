@@ -7,14 +7,11 @@ import {
 import { getStatusState } from '../../../../services/chargeback/chargeback.utils';
 import { CHARGEBACK_STATUS_COPY } from '../../chargebacks.constants';
 
-const STATE_CLASSES: Record<
-  ChargebackColorState,
-  { readonly badge: string; readonly dot: string }
-> = {
-  'needs-action': { badge: 'bg-needs-action-soft text-needs-action-ink', dot: 'bg-needs-action' },
-  'in-review': { badge: 'bg-in-review-soft text-in-review-ink', dot: 'bg-in-review' },
-  won: { badge: 'bg-won-soft text-won-ink', dot: 'bg-won' },
-  lost: { badge: 'bg-lost-soft text-lost-ink', dot: 'bg-lost' },
+const STATE_CLASSES: Record<ChargebackColorState, string> = {
+  'needs-action': 'border-needs-action-line bg-needs-action-soft text-needs-action-ink',
+  'in-review': 'border-in-review-line bg-in-review-soft text-in-review-ink',
+  won: 'border-won-line bg-won-soft text-won-ink',
+  lost: 'border-lost-line bg-lost-soft text-lost-ink',
 };
 
 @Component({

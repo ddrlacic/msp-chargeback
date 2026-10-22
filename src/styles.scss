@@ -35,18 +35,25 @@
 
   --color-warning: #ffa800;
   --color-warning-10: #fff6e6;
+  --color-warning-15: #fff2d9;
+  --color-warning-50: #ffd380;
   --color-warning-120: #976200;
   --color-warning-140: #794d00;
   --color-info: #007aff;
   --color-info-10: #e6f2ff;
+  --color-info-50: #80bdff;
   --color-info-120: #0069dd;
   --color-info-140: #0053b2;
   --color-success: #44ab0b;
   --color-success-10: #ecf7e7;
+  --color-success-15: #e3f2da;
+  --color-success-50: #a2d585;
   --color-success-120: #328406;
   --color-success-140: #276904;
   --color-error: #ff3b30;
   --color-error-10: #ffebea;
+  --color-error-15: #ffe2e0;
+  --color-error-50: #ff9d98;
   --color-error-120: #d10006;
   --color-error-140: #a80004;
 
@@ -74,17 +81,21 @@
   --color-sidebar-label: rgb(255 255 255 / 0.55);
 
   --color-needs-action: var(--color-warning);
-  --color-needs-action-soft: var(--color-warning-10);
+  --color-needs-action-soft: var(--color-warning-15);
+  --color-needs-action-line: var(--color-warning-50);
   --color-needs-action-ink: var(--color-warning-140);
   --color-needs-action-text: var(--color-warning-120);
   --color-in-review: var(--color-info);
   --color-in-review-soft: var(--color-info-10);
+  --color-in-review-line: var(--color-info-50);
   --color-in-review-ink: var(--color-info-140);
   --color-won: var(--color-success);
-  --color-won-soft: var(--color-success-10);
+  --color-won-soft: var(--color-success-15);
+  --color-won-line: var(--color-success-50);
   --color-won-ink: var(--color-success-140);
   --color-lost: var(--color-error);
-  --color-lost-soft: var(--color-error-10);
+  --color-lost-soft: var(--color-error-15);
+  --color-lost-line: var(--color-error-50);
   --color-lost-ink: var(--color-error-140);
   --color-lost-text: var(--color-error-120);
 

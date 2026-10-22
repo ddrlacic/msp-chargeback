@@ -21,16 +21,20 @@ describe('ChargebackStatusBadgeComponent', () => {
 
   it('shows the status label with its color state', () => {
     const element = render('returned-by-worldpay');
+    const badge = element.querySelector('span');
 
     expect(element.textContent?.trim()).toBe('Returned by Worldpay');
     expect(element.dataset['state']).toBe('needs-action');
-    expect(element.querySelector('span')?.classList.contains('bg-needs-action-soft')).toBe(true);
+    expect(badge?.classList.contains('bg-needs-action-soft')).toBe(true);
+    expect(badge?.classList.contains('border-needs-action-line')).toBe(true);
   });
 
   it('uses the lost colors for an accepted chargeback', () => {
     const element = render('accepted');
+    const badge = element.querySelector('span');
 
     expect(element.dataset['state']).toBe('lost');
-    expect(element.querySelector('span')?.classList.contains('bg-lost-soft')).toBe(true);
+    expect(badge?.classList.contains('bg-lost-soft')).toBe(true);
+    expect(badge?.classList.contains('border-lost-line')).toBe(true);
   });
 });

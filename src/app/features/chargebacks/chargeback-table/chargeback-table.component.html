@@ -1,6 +1,6 @@
 @if (rows().length) {
   <div
-    class="@container relative overflow-auto overscroll-x-contain rounded-md border border-line bg-white [scrollbar-width:thin] focus-visible:-outline-offset-2"
+    class="@container relative overflow-auto overscroll-x-contain rounded-sm border border-line bg-white [scrollbar-width:thin] focus-visible:-outline-offset-2"
     role="region"
     tabindex="0"
     [attr.aria-label]="copy.CAPTION"
@@ -225,7 +225,7 @@
     </span>
   </div>
 } @else {
-  <div class="flex min-h-80 flex-col rounded-md border border-line bg-white">
+  <div class="flex min-h-80 flex-col rounded-sm border border-line bg-white">
     <ng-content />
   </div>
 }
