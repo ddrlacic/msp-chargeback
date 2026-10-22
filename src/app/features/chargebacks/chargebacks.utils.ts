@@ -9,12 +9,15 @@ import {
   isNeedsAction,
   roundMoney,
 } from '../../services/chargeback/chargeback.utils';
+import { FilterChip } from '../../shared/components/filter-chips/filter-chips.component';
+import { formatFilterValues } from '../../shared/components/filter-chips/filter-chips.utils';
 import { addDays, toIsoDate } from '../../shared/utils/date.utils';
 import {
   CARD_NETWORK_LABELS,
   CHARGEBACK_STATUS_COPY,
   CHARGEBACKS_CONSTANTS,
   COLUMN_LABELS,
+  RECEIVED_PRESET_LABELS,
 } from './chargebacks.constants';
 import {
   ChargebackListFilters,
@@ -118,6 +121,56 @@ export function hasActiveFilters(filters: ChargebackListFilters): boolean {
     filters.merchantIds.length > 0 ||
     filters.networks.length > 0
   );
+}
+
+export function getFilterChips(
+  filters: ChargebackListFilters,
+  locations: readonly LocationOption[],
+): readonly FilterChip[] {
+  const copy = CHARGEBACKS_CONSTANTS.LIST.FILTERS;
+  const chips: FilterChip[] = [];
+  if (filters.received !== 'any') {
+    chips.push({
+      key: 'received',
+      label: copy.RECEIVED,
+      value: RECEIVED_PRESET_LABELS[filters.received],
+    });
+  }
+  if (filters.merchantIds.length) {
+    const names = filters.merchantIds.flatMap((merchantId) => {
+      const location = locations.find((item) => item.merchantId === merchantId);
+      return location ? [location.locationName] : [];
+    });
+    chips.push({ key: 'merchantIds', label: copy.LOCATION, value: formatFilterValues(names) });
+  }
+  if (filters.networks.length) {
+    chips.push({
+      key: 'networks',
+      label: copy.NETWORK,
+      value: formatFilterValues(filters.networks.map((network) => CARD_NETWORK_LABELS[network])),
+    });
+  }
+  return chips;
+}
+
+export function removeListFilter(
+  filters: ChargebackListFilters,
+  key: string,
+): ChargebackListFilters {
+  switch (key) {
+    case 'received':
+      return { ...filters, received: DEFAULT_LIST_FILTERS.received };
+    case 'merchantIds':
+      return { ...filters, merchantIds: DEFAULT_LIST_FILTERS.merchantIds };
+    case 'networks':
+      return { ...filters, networks: DEFAULT_LIST_FILTERS.networks };
+    default:
+      return filters;
+  }
+}
+
+export function clearListFilters(filters: ChargebackListFilters): ChargebackListFilters {
+  return { ...DEFAULT_LIST_FILTERS, search: filters.search };
 }
 
 export function matchesTab(row: ChargebackRow, tab: ListTab): boolean {

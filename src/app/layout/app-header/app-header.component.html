@@ -4,7 +4,7 @@
   <div class="flex min-w-0 items-center gap-2">
     <button
       type="button"
-      class="relative grid size-[34px] shrink-0 place-items-center rounded-sm text-grayscale-80 transition-[background-color] duration-200 ease-in-out after:absolute after:top-1/2 after:left-1/2 after:size-10 after:-translate-1/2 hover:bg-hover active:bg-pressed pointer-coarse:after:size-11"
+      class="relative grid size-control shrink-0 place-items-center rounded-md text-grayscale-80 transition-[background-color] duration-200 ease-in-out after:absolute after:top-1/2 after:left-1/2 after:size-10 after:-translate-1/2 hover:bg-hover active:bg-pressed pointer-coarse:after:size-11"
       [attr.aria-label]="layout.sidebarOpen() ? copy.CLOSE_MENU : copy.OPEN_MENU"
       [attr.aria-expanded]="layout.sidebarOpen()"
       aria-controls="app-sidebar"
@@ -29,7 +29,7 @@
     <button
       type="button"
       popovertarget="notifications-menu"
-      class="relative grid size-[34px] place-items-center rounded-sm text-grayscale-80 transition-[background-color] duration-200 ease-in-out after:absolute after:top-1/2 after:left-1/2 after:size-10 after:-translate-1/2 hover:bg-hover active:bg-pressed pointer-coarse:after:size-11"
+      class="relative grid size-control place-items-center rounded-md text-grayscale-80 transition-[background-color] duration-200 ease-in-out after:absolute after:top-1/2 after:left-1/2 after:size-10 after:-translate-1/2 hover:bg-hover active:bg-pressed pointer-coarse:after:size-11"
       [attr.aria-label]="copy.NOTIFICATIONS"
     >
       <lucide-icon
@@ -44,7 +44,7 @@
     <button
       type="button"
       popovertarget="user-menu"
-      class="relative grid size-[34px] place-items-center rounded-sm text-grayscale-80 transition-[background-color] duration-200 ease-in-out after:absolute after:top-1/2 after:left-1/2 after:size-10 after:-translate-1/2 hover:bg-hover active:bg-pressed pointer-coarse:after:size-11"
+      class="relative grid size-control place-items-center rounded-md text-grayscale-80 transition-[background-color] duration-200 ease-in-out after:absolute after:top-1/2 after:left-1/2 after:size-10 after:-translate-1/2 hover:bg-hover active:bg-pressed pointer-coarse:after:size-11"
       [attr.aria-label]="copy.USER_MENU"
     >
       <lucide-icon
@@ -62,7 +62,7 @@
 <div
   id="notifications-menu"
   popover
-  class="inset-auto top-16 right-4 m-0 w-[min(360px,calc(100vw-16px))] rounded-sm border-0 bg-white p-0 shadow-menu max-sm:right-2"
+  class="inset-auto top-16 right-4 m-0 w-[min(360px,calc(100vw-16px))] rounded-md border-0 bg-white p-0 shadow-menu max-sm:right-2"
 >
   <p class="border-b border-divider px-4 py-3 font-semibold">{{ copy.NOTIFICATIONS }}</p>
   <p class="px-4 py-6 text-center text-ink-muted">{{ copy.NO_NOTIFICATIONS }}</p>
@@ -72,7 +72,7 @@
   id="user-menu"
   popover
   #userMenu
-  class="inset-auto top-16 right-4 m-0 w-[min(260px,calc(100vw-16px))] rounded-sm border-0 bg-white p-0 shadow-menu max-sm:right-2"
+  class="inset-auto top-16 right-4 m-0 w-[min(260px,calc(100vw-16px))] rounded-md border-0 bg-white p-0 shadow-menu max-sm:right-2"
 >
   <div class="border-b border-divider px-4 py-3">
     <p class="truncate font-semibold" [attr.title]="copy.USER_NAME">{{ copy.USER_NAME }}</p>
@@ -87,7 +87,14 @@
         class="flex min-h-10 w-full items-center gap-3 px-4 py-1.5 text-left transition-[background-color] duration-200 ease-in-out hover:bg-hover focus-visible:-outline-offset-2 pointer-coarse:min-h-11"
         (click)="userMenu.hidePopover()"
       >
-        <lucide-icon name="user" class="size-4 text-grayscale-80" aria-hidden="true" />
+        <lucide-icon
+          name="user"
+          class="size-4 text-grayscale-80"
+          [size]="16"
+          [strokeWidth]="1.5"
+          [absoluteStrokeWidth]="true"
+          aria-hidden="true"
+        />
         {{ copy.PROFILE }}
       </button>
     </li>
@@ -97,7 +104,14 @@
         class="flex min-h-10 w-full items-center gap-3 px-4 py-1.5 text-left transition-[background-color] duration-200 ease-in-out hover:bg-hover focus-visible:-outline-offset-2 pointer-coarse:min-h-11"
         (click)="userMenu.hidePopover()"
       >
-        <lucide-icon name="log-out" class="size-4 text-grayscale-80" aria-hidden="true" />
+        <lucide-icon
+          name="log-out"
+          class="size-4 text-grayscale-80"
+          [size]="16"
+          [strokeWidth]="1.5"
+          [absoluteStrokeWidth]="true"
+          aria-hidden="true"
+        />
         {{ copy.SIGN_OUT }}
       </button>
     </li>

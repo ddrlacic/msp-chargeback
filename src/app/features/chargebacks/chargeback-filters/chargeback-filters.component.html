@@ -1,11 +1,17 @@
 <div class="relative flex w-full min-w-0 items-center sm:w-88">
-  <span class="pointer-events-none absolute left-2.5 text-ink-subtle" aria-hidden="true">
-    <lucide-icon name="search" class="block size-4" />
+  <span class="pointer-events-none absolute left-3 text-ink-subtle" aria-hidden="true">
+    <lucide-icon
+      name="search"
+      class="block size-4"
+      [size]="16"
+      [strokeWidth]="1.5"
+      [absoluteStrokeWidth]="true"
+    />
   </span>
   <input
     #search
     type="search"
-    class="h-[34px] w-full min-w-0 appearance-none rounded-sm border border-line-strong bg-white pr-9 pl-8 text-ink transition-[border-color] duration-200 ease-in-out placeholder:text-ink-muted hover:border-grayscale-40 [&::-webkit-search-cancel-button]:appearance-none"
+    class="h-control w-full min-w-0 appearance-none rounded-md bg-white pr-10 pl-9 text-ink shadow-field transition-[box-shadow] duration-200 ease-in-out placeholder:text-ink-muted hover:shadow-field-hover [&::-webkit-search-cancel-button]:appearance-none"
     autocomplete="off"
     [attr.aria-label]="copy.SEARCH.LABEL"
     [placeholder]="copy.SEARCH.PLACEHOLDER"
@@ -15,11 +21,18 @@
   @if (filters().search) {
     <button
       type="button"
-      class="absolute right-1.5 grid size-6 place-items-center rounded-sm text-ink-subtle transition-[background-color,color] duration-200 ease-in-out after:absolute after:-inset-2 hover:bg-hover hover:text-ink"
+      class="absolute right-2 grid size-6 place-items-center rounded-sm text-ink-subtle transition-[background-color,color] duration-200 ease-in-out after:absolute after:-inset-2 hover:bg-hover hover:text-ink"
       [attr.aria-label]="copy.SEARCH.CLEAR"
       (click)="clearSearch(search)"
     >
-      <lucide-icon name="x" class="block size-4" aria-hidden="true" />
+      <lucide-icon
+        name="x"
+        class="block size-4"
+        [size]="16"
+        [strokeWidth]="1.5"
+        [absoluteStrokeWidth]="true"
+        aria-hidden="true"
+      />
     </button>
   }
 </div>
@@ -47,13 +60,3 @@
   [valueLabel]="networkValue()"
   (selectedChange)="onNetworks($event)"
 />
-
-@if (active()) {
-  <button
-    type="button"
-    class="relative inline-flex h-[34px] items-center rounded-sm px-3 font-semibold whitespace-nowrap text-brand-primary transition-[background-color,scale] duration-200 ease-in-out after:absolute after:inset-x-0 after:-inset-y-[3px] hover:bg-hover active:scale-[0.96] active:bg-pressed motion-reduce:active:scale-100 pointer-coarse:after:-inset-y-[5px]"
-    (click)="clear.emit()"
-  >
-    {{ copy.FILTERS.CLEAR }}
-  </button>
-}

@@ -3,15 +3,18 @@ import { TEST_TODAY } from '../../testing/providers';
 import { clampColumnWidth } from './chargeback-table/chargeback-table.constants';
 import { ChargebackListFilters, ChargebackRow } from './chargebacks.types';
 import {
+  clearListFilters,
   countByTab,
   DEFAULT_LIST_FILTERS,
   DEFAULT_LIST_SORT,
+  getFilterChips,
   getListSummary,
   getLocationOptions,
   getNextSort,
   getReceivedRange,
   hasActiveFilters,
   matchesFilters,
+  removeListFilter,
   sortRows,
   toChargebackRow,
   toCsv,
@@ -106,6 +109,64 @@ describe('chargebacks list utils', () => {
       expect(hasActiveFilters({ ...DEFAULT_LIST_FILTERS, search: 'cb' })).toBe(true);
       expect(hasActiveFilters({ ...DEFAULT_LIST_FILTERS, received: 'this-month' })).toBe(true);
       expect(hasActiveFilters({ ...DEFAULT_LIST_FILTERS, networks: ['visa'] })).toBe(true);
+    });
+  });
+
+  describe('filter chips', () => {
+    const locations = getLocationOptions(rows);
+
+    function locationName(merchantId: string): string {
+      return locations.find((location) => location.merchantId === merchantId)?.locationName ?? '';
+    }
+
+    it('shows no chips for search alone', () => {
+      expect(getFilterChips({ ...DEFAULT_LIST_FILTERS, search: 'cb' }, locations)).toEqual([]);
+    });
+
+    it('shows one chip per filter with its chosen values in the order they were picked', () => {
+      const chips = getFilterChips(
+        {
+          ...DEFAULT_LIST_FILTERS,
+          received: 'last-30-days',
+          merchantIds: ['MID-880103', 'MID-880102'],
+          networks: ['visa', 'mastercard', 'amex'],
+        },
+        locations,
+      );
+
+      expect(chips).toEqual([
+        { key: 'received', label: 'Received', value: 'Last 30 days' },
+        {
+          key: 'merchantIds',
+          label: 'Location',
+          value: `${locationName('MID-880103')}, ${locationName('MID-880102')}`,
+        },
+        { key: 'networks', label: 'Card network', value: 'Visa +2 more' },
+      ]);
+    });
+
+    it('removes one filter and keeps the rest', () => {
+      const filters: ChargebackListFilters = {
+        search: 'cb',
+        received: 'this-month',
+        merchantIds: ['MID-880103'],
+        networks: ['visa'],
+      };
+
+      expect(removeListFilter(filters, 'received')).toEqual({ ...filters, received: 'any' });
+      expect(removeListFilter(filters, 'merchantIds')).toEqual({ ...filters, merchantIds: [] });
+      expect(removeListFilter(filters, 'networks')).toEqual({ ...filters, networks: [] });
+    });
+
+    it('clears every filter but keeps the search', () => {
+      expect(
+        clearListFilters({
+          search: 'cb',
+          received: 'this-month',
+          merchantIds: ['MID-880103'],
+          networks: ['visa'],
+        }),
+      ).toEqual({ ...DEFAULT_LIST_FILTERS, search: 'cb' });
     });
   });
 

@@ -7,10 +7,24 @@
   <span class="flex items-center gap-1 text-small" [class]="toneClass()">
     @switch (info().tone) {
       @case ('soon') {
-        <lucide-icon name="clock" class="size-3 shrink-0" aria-hidden="true" />
+        <lucide-icon
+          name="clock"
+          class="size-3 shrink-0"
+          [size]="12"
+          [strokeWidth]="iconStroke()"
+          [absoluteStrokeWidth]="true"
+          aria-hidden="true"
+        />
       }
       @case ('overdue') {
-        <lucide-icon name="circle-alert" class="size-3 shrink-0" aria-hidden="true" />
+        <lucide-icon
+          name="circle-alert"
+          class="size-3 shrink-0"
+          [size]="12"
+          [strokeWidth]="iconStroke()"
+          [absoluteStrokeWidth]="true"
+          aria-hidden="true"
+        />
       }
     }
     {{ info().remainingLabel }}

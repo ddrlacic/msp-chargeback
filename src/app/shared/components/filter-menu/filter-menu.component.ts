@@ -15,6 +15,7 @@ import {
 import { LucideAngularModule } from 'lucide-angular';
 
 import { CheckboxComponent } from '../checkbox/checkbox.component';
+import { FILTER_MENU_CONSTANTS } from './filter-menu.constants';
 
 export interface FilterMenuOption {
   readonly value: string;
@@ -53,10 +54,14 @@ export class FilterMenuComponent {
   private readonly trigger = viewChild.required<ElementRef<HTMLButtonElement>>('trigger');
   private readonly panel = viewChild.required<ElementRef<HTMLElement>>('panel');
 
+  protected readonly copy = FILTER_MENU_CONSTANTS;
   protected readonly id = `filter-menu-${nextFilterMenuId++}`;
   protected readonly open = signal(false);
   protected readonly alignEnd = signal(false);
   protected readonly active = computed(() => Boolean(this.valueLabel()));
+  protected readonly allSelected = computed(() =>
+    this.options().every((option) => this.selected().includes(option.value)),
+  );
   protected readonly accessibleName = computed(() => {
     const value = this.valueLabel();
     return value ? `${this.label()}, ${value}` : this.label();
@@ -88,6 +93,16 @@ export class FilterMenuComponent {
     this.selectedChange.emit([value]);
   }
 
+  protected clearValues(): void {
+    this.selectedChange.emit([]);
+    this.refocusOptions();
+  }
+
+  protected selectAllValues(): void {
+    this.selectedChange.emit(this.options().map((option) => option.value));
+    this.refocusOptions();
+  }
+
   protected onOptionClick(event: MouseEvent): void {
     if (event.detail > 0) {
       this.closeAndFocusTrigger();
@@ -113,6 +128,10 @@ export class FilterMenuComponent {
     if (this.open() && next && !this.host.nativeElement.contains(next)) {
       this.open.set(false);
     }
+  }
+
+  private refocusOptions(): void {
+    afterNextRender(() => this.focusFirstOption(), { injector: this.injector });
   }
 
   private focusFirstOption(): void {

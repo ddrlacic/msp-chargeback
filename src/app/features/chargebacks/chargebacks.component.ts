@@ -12,6 +12,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { PageComponent } from '../../layout/page/page.component';
 import { ChargebackStore } from '../../services/chargeback/chargeback.store';
 import { CLOCK } from '../../shared/clock';
+import { FilterChipsComponent } from '../../shared/components/filter-chips/filter-chips.component';
 import { toIsoDate } from '../../shared/utils/date.utils';
 import { ChargebackFiltersComponent } from './chargeback-filters/chargeback-filters.component';
 import { ChargebackSummaryComponent } from './chargeback-summary/chargeback-summary.component';
@@ -24,13 +25,16 @@ import { ChargebacksListState } from './chargebacks-list.state';
 import { CHARGEBACKS_CONSTANTS, LIST_TAB_EMPTY_COPY } from './chargebacks.constants';
 import { ChargebackListFilters, ColumnKey, ListTab } from './chargebacks.types';
 import {
+  clearListFilters,
   countByTab,
+  getFilterChips,
   getListSummary,
   getLocationOptions,
   getNextSort,
   hasActiveFilters,
   matchesFilters,
   matchesTab,
+  removeListFilter,
   sortRows,
   toChargebackRow,
   toCsv,
@@ -45,6 +49,7 @@ const TABLE_PANEL_ID = 'chargebacks-table-panel';
     ChargebackSummaryComponent,
     ChargebackTableComponent,
     ChargebackTabsComponent,
+    FilterChipsComponent,
     LucideAngularModule,
     PageComponent,
   ],
@@ -88,6 +93,7 @@ export class ChargebacksComponent {
   protected readonly currency = computed(() => this.allRows()[0]?.currency ?? 'USD');
   protected readonly locations = computed(() => getLocationOptions(this.allRows()));
   protected readonly tabId = computed(() => getTabId(this.tab()));
+  protected readonly filterChips = computed(() => getFilterChips(this.filters(), this.locations()));
 
   private readonly selectedRows = computed(() =>
     this.rows().filter((row) => this.selectedIds().has(row.caseId)),
@@ -130,6 +136,14 @@ export class ChargebacksComponent {
   protected clearFilters(): void {
     this.listState.clearFilters();
     this.selectedIds.set(new Set());
+  }
+
+  protected removeFilter(key: string): void {
+    this.onFiltersChange(removeListFilter(this.filters(), key));
+  }
+
+  protected clearAllFilters(): void {
+    this.onFiltersChange(clearListFilters(this.filters()));
   }
 
   protected onSortChange(key: ColumnKey): void {

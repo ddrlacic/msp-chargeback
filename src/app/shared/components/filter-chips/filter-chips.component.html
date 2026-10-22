@@ -1,0 +1,37 @@
+<ul class="flex min-w-0 flex-wrap items-center gap-2" [attr.aria-label]="copy.LABEL">
+  @for (chip of chips(); track chip.key) {
+    <li
+      class="inline-flex h-control max-w-full min-w-0 items-center gap-1 rounded-md bg-overlay-05 px-3 transition-[background-color] duration-200 ease-in-out has-[button:hover]:bg-overlay-10"
+      [attr.data-filter]="chip.key"
+    >
+      <span class="min-w-0 truncate" [title]="chip.label + ': ' + chip.value"
+        ><span class="text-ink-muted">{{ chip.label }}:</span> {{ chip.value }}</span
+      >
+      <button
+        type="button"
+        class="relative grid size-4 shrink-0 place-items-center rounded-xs text-ink-subtle transition-[color] duration-200 ease-in-out after:absolute after:-inset-3 hover:text-ink-strong"
+        [attr.aria-label]="copy.REMOVE(chip.label)"
+        (click)="remove.emit(chip.key)"
+      >
+        <lucide-icon
+          name="x"
+          class="block size-4"
+          [size]="16"
+          [strokeWidth]="1.5"
+          [absoluteStrokeWidth]="true"
+          aria-hidden="true"
+        />
+      </button>
+    </li>
+  }
+</ul>
+
+<span class="h-6 w-px shrink-0 bg-divider" aria-hidden="true"></span>
+
+<button
+  type="button"
+  class="relative rounded-sm text-brand-primary underline-offset-2 after:absolute after:-inset-x-2 after:-inset-y-2 hover:underline"
+  (click)="clearAll.emit()"
+>
+  {{ copy.CLEAR_ALL }}
+</button>

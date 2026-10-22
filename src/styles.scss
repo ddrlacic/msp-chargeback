@@ -142,9 +142,15 @@
   --shadow-card: 0 0 0 1px rgb(0 0 0 / 0.05), 0 2px 5px 0 rgb(0 0 0 / 0.05);
   --shadow-menu: 0 5px 20px 0 rgb(0 0 0 / 0.1), 0 0 0 1px rgb(0 0 0 / 0.05);
   --shadow-button-primary: 0 1px 0 rgb(0 0 0 / 0.08), inset 0 -1px 0 rgb(0 0 0 / 0.1);
-  --shadow-button-secondary: 0 1px 0 rgb(0 0 0 / 0.06);
+  --shadow-field: inset 0 0 0 1px var(--color-line-strong);
+  --shadow-field-hover: inset 0 0 0 1px var(--color-grayscale-40);
+  --shadow-control: var(--shadow-field), 0 1px 0 rgb(0 0 0 / 0.06);
+  --shadow-control-hover: var(--shadow-field-hover), 0 1px 0 rgb(0 0 0 / 0.06);
+  --shadow-control-selected: inset 0 0 0 1.5px var(--color-accent-80), 0 1px 0 rgb(0 0 0 / 0.06);
   --shadow-focus: 0 0 0 2px rgb(90 85 227 / 0.7);
   --shadow-sidebar-focus: inset 0 0 0 1.5px var(--color-accent-60);
+
+  --spacing-control: 2.25rem;
 
   --breakpoint-sm: 37.5rem;
 

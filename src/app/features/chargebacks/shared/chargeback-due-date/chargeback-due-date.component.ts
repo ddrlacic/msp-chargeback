@@ -31,4 +31,5 @@ export class ChargebackDueDateComponent {
     getDueDateInfo(this.date(), this.clock.now(), this.windowDays()),
   );
   protected readonly toneClass = computed(() => TONE_CLASSES[this.info().tone]);
+  protected readonly iconStroke = computed(() => (this.layout() === 'inline' ? 1 : 1.5));
 }

@@ -17,7 +17,6 @@ import {
   RECEIVED_PRESETS,
   ReceivedPreset,
 } from '../chargebacks.types';
-import { hasActiveFilters } from '../chargebacks.utils';
 
 @Component({
   selector: 'app-chargeback-filters',
@@ -31,7 +30,6 @@ export class ChargebackFiltersComponent {
   readonly locations = input.required<readonly LocationOption[]>();
 
   readonly filtersChange = output<ChargebackListFilters>();
-  readonly clear = output<void>();
 
   protected readonly copy = CHARGEBACKS_CONSTANTS.LIST;
 
@@ -72,8 +70,6 @@ export class ChargebackFiltersComponent {
     }
     return selected.length ? this.copy.FILTERS.NETWORKS(selected.length) : undefined;
   });
-
-  protected readonly active = computed(() => hasActiveFilters(this.filters()));
 
   protected onSearch(event: Event): void {
     this.update({ search: (event.target as HTMLInputElement).value });

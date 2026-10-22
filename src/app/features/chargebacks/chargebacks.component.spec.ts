@@ -137,6 +137,35 @@ describe('ChargebacksComponent', () => {
     expect(bodyRows().length).toBe(17);
   });
 
+  it('shows applied filters as chips that can be removed one by one or all at once', async () => {
+    const networkMenu = [...element.querySelectorAll('app-filter-menu')].find(
+      (menu) => text(menu.querySelector('button')) === 'Card network',
+    );
+    const visa = [...(networkMenu?.querySelectorAll('label') ?? [])].find(
+      (label) => text(label) === 'Visa',
+    );
+    expect(element.querySelector('app-filter-chips')).toBe(null);
+
+    await click(visa?.querySelector('input'));
+
+    expect(bodyRows().length).toBe(6);
+    expect(text(element.querySelector('[data-filter="networks"]'))).toBe('Card network: Visa');
+
+    await click(element.querySelector('[aria-label="Remove Card network filter"]'));
+    expect(bodyRows().length).toBe(17);
+    expect(element.querySelector('app-filter-chips')).toBe(null);
+
+    await click(visa?.querySelector('input'));
+    await search('CB-26');
+    const clearAll = [...element.querySelectorAll('app-filter-chips button')].find(
+      (button) => text(button) === 'Clear all',
+    );
+    await click(clearAll);
+
+    expect(element.querySelector('app-filter-chips')).toBe(null);
+    expect(element.querySelector<HTMLInputElement>('input[type="search"]')?.value).toBe('CB-26');
+  });
+
   it('opens the case when a row is clicked', async () => {
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
