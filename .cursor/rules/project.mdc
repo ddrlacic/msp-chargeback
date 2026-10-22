@@ -1,0 +1,35 @@
+---
+description: MSP Chargeback prototype conventions: msp-ui for technology, menu-app for UI
+alwaysApply: true
+---
+
+# MSP Chargeback prototype
+
+A shareable prototype published to GitHub Pages at https://ddrlacic.github.io/msp-chargeback/. Pushing to `main` deploys it.
+
+## Sources of truth
+
+- **Technology: `../msp-ui`** (Angular 21, zoneless, signals, Tailwind v4, Lucide, Vitest). Follow its rules in `../msp-ui/.cursor/rules/` for code structure, naming and testing.
+- **UI: `../menu-app`** (Management Center). Match its look and behaviour. Look in `../menu-app/frontend-migration/libs/admin-ui` for components and `../menu-app/frontend-migration/libs/admin-ui/src/assets/styles/scss/_01-settings` for tokens. Copy for labels and messages follows `../menu-app/docs/design/ux-copy-principles.md`.
+- Chargeback behaviour and field names: `../msp-ui/src/app/features/home/chargebacks` and `../msp-ui/src/app/services`.
+
+## This repo is public
+
+- Re-create behaviour and wording; never copy source files, internal docs, credentials, API URLs, or real merchant, cardholder or chargeback data from msp-ui or menu-app.
+- All data is fake and lives in the prototype.
+
+## Code rules
+
+- No comments of any kind.
+- Angular CLI only: `ng serve`, `ng test`, `ng build`. Never `npm run` or `vitest run`.
+- `input()`, `output()`, `computed()`, `signal()`, `inject()`; `@if`, `@for`, `@switch`; host bindings in `host: {}`.
+- Standalone components with `ChangeDetectionStrategy.OnPush`.
+- Tailwind utility classes and the tokens in `src/styles.scss`; no hardcoded colours in components; Lucide icons only; component SCSS stays empty.
+- Tests: `toBe()` and `toEqual()`, `toHaveBeenCalledOnce()`; no `toBeTruthy()` or `toBeDefined()`; no `as any`.
+- Routing uses hash location so shared links work on GitHub Pages. Keep it.
+- No backend: data comes from typed fixtures and signal-based services.
+
+## Working agreement
+
+- The user verifies in the browser. Do not open the prototype yourself; list what changed and what to check.
+- Local server: `ng serve`, then `http://localhost:4200/`.
