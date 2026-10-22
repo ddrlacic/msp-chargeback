@@ -4,6 +4,7 @@ import {
   ChargebackDocumentType,
   ChargebackStatus,
 } from '../../services/chargeback/chargeback.types';
+import { ColumnKey, ListTab, ReceivedPreset } from './chargebacks.types';
 
 export interface ChargebackStatusCopy {
   readonly label: string;
@@ -114,10 +115,99 @@ export const CHARGEBACK_DOCUMENT_TYPE_LABELS: Record<ChargebackDocumentType, str
   other: 'Other',
 };
 
+export const RECEIVED_PRESET_LABELS: Record<ReceivedPreset, string> = {
+  any: 'Any date',
+  'last-7-days': 'Last 7 days',
+  'last-30-days': 'Last 30 days',
+  'last-90-days': 'Last 90 days',
+  'this-month': 'This month',
+  'last-month': 'Last month',
+};
+
+export const COLUMN_LABELS: Record<ColumnKey, string> = {
+  caseId: 'Case ID',
+  status: 'Status',
+  dueDate: 'Due date',
+  amount: 'Amount',
+  reason: 'Reason',
+  card: 'Card',
+  transaction: 'Transaction',
+  transactionDate: 'Transaction date',
+  location: 'Location',
+  received: 'Received',
+  lastUpdated: 'Last updated',
+};
+
+export const LIST_TAB_EMPTY_COPY: Record<
+  ListTab,
+  { readonly title: string; readonly message?: string }
+> = {
+  all: {
+    title: 'No chargebacks',
+    message: 'When a cardholder disputes a payment, the case shows up here',
+  },
+  'needs-action': { title: 'Nothing needs action', message: 'You’re all caught up' },
+  'in-review': { title: 'No cases in review' },
+  won: { title: 'No won cases' },
+  lost: { title: 'No lost cases' },
+};
+
+const countLabel = (count: number, singular: string, plural: string) =>
+  count === 1 ? `1 ${singular}` : `${count} ${plural}`;
+
 export const CHARGEBACKS_CONSTANTS = {
   LIST: {
     TITLE: 'Chargebacks',
-    DESCRIPTION: 'Review chargebacks and respond before the due date',
+    SUMMARY: {
+      DUE_SOON: 'Due soon',
+      DISPUTED: (amount: string) => `${amount} disputed`,
+      RETURNED: (amount: string) => `${amount} returned`,
+      NEXT_DUE: (date: string) => `Next due ${date}`,
+      NOTHING_DUE_SOON: 'Nothing due soon',
+    },
+    TABS: {
+      LABEL: 'Case status',
+      ALL: 'All',
+    },
+    SEARCH: {
+      LABEL: 'Search cases',
+      PLACEHOLDER: 'Search by case ID, transaction, or MID',
+      CLEAR: 'Clear search',
+    },
+    FILTERS: {
+      RECEIVED: 'Received',
+      LOCATION: 'Location',
+      NETWORK: 'Card network',
+      LOCATIONS: (count: number) => countLabel(count, 'location', 'locations'),
+      NETWORKS: (count: number) => countLabel(count, 'network', 'networks'),
+      CLEAR: 'Clear filters',
+    },
+    EXPORT: {
+      ALL: 'Export cases',
+      SELECTED: (count: number) => `Export ${countLabel(count, 'case', 'cases')}`,
+      FILE_NAME: (date: string) => `chargebacks-${date}.csv`,
+      CURRENCY: 'Currency',
+      REASON_CODE: 'Reason code',
+      CARD_LAST_FOUR: 'Card last four',
+      MERCHANT_ID: 'Merchant ID',
+    },
+    TABLE: {
+      CAPTION: 'Chargeback cases',
+      ACTION: 'Action',
+      SELECT_ALL: 'Select all cases in view',
+      SELECT_ROW: (caseId: string) => `Select case ${caseId}`,
+      RESIZE: (column: string) => `Resize the ${column} column`,
+      VIEW_DETAILS: 'View details',
+      NO_DUE_DATE: 'No due date',
+      CARD: (network: string, lastFour: string) => `${network} ending in ${lastFour}`,
+      IN_VIEW: (count: number) => `${countLabel(count, 'case', 'cases')} in view`,
+      SELECTED: (selected: number, total: number) => `${selected} of ${total} selected`,
+      TOTAL: 'Total disputed',
+    },
+    NO_RESULTS: {
+      TITLE: 'No cases match your filters',
+      MESSAGE: 'Try different words or clear the filters',
+    },
   },
   CASE: {
     BREADCRUMB: 'Chargebacks',

@@ -22,8 +22,9 @@ A shareable prototype published to GitHub Pages at https://ddrlacic.github.io/ms
 ## Dev handoff spec
 
 - `docs/handoff/` is the build spec for msp-ui developers and their AI agents. Start at `docs/handoff/README.md`.
-- Every prototype change updates the matching handoff file in the same session: status model, screen, component, data, copy, acceptance criteria.
-- New decisions go to `docs/handoff/decisions.md`; unresolved ones to `docs/handoff/open-questions.md`.
+- Write the handoff docs for a page only once the user says they're satisfied with its design. While the design is still changing, change only the prototype; don't touch `docs/handoff/` until then.
+- When the user approves a page, update every matching handoff file in that session: status model, screen, component, data, copy, acceptance criteria.
+- At that point, new decisions go to `docs/handoff/decisions.md` and unresolved ones to `docs/handoff/open-questions.md`. Record only the final design, not the options that were tried and dropped.
 
 ## This repo is public
 

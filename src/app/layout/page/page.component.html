@@ -2,9 +2,14 @@
   class="flex min-h-0 flex-1 flex-col rounded-md bg-white shadow-card"
   [attr.aria-labelledby]="titleId"
 >
-  <header class="shrink-0 border-b border-line p-4 sm:p-6">
-    @if (breadcrumbs().length) {
-      <nav aria-label="Breadcrumb" class="mb-4 sm:mb-6">
+  <header
+    #header
+    class="shrink-0 border-b border-line px-4 transition-[padding] duration-200 ease-out-strong motion-reduce:transition-none sm:px-6"
+    [class]="slim() ? 'py-3' : 'py-4 sm:py-6'"
+    [attr.data-compact]="compact() ? '' : null"
+  >
+    @if (hasBreadcrumbs()) {
+      <nav aria-label="Breadcrumb">
         <ol class="flex min-h-[22px] flex-wrap items-center gap-2">
           @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
             <li class="flex min-w-0 items-center gap-2">
@@ -34,10 +39,25 @@
           }
         </ol>
       </nav>
-    }
-    <h1 [id]="titleId">{{ title() }}</h1>
-    @if (description()) {
-      <p class="mt-1 text-pretty text-ink-muted">{{ description() }}</p>
+      <h1 class="sr-only" [id]="titleId">{{ title() }}</h1>
+    } @else {
+      <h1
+        class="transition-[font-size,line-height] duration-200 ease-out-strong motion-reduce:transition-none"
+        [class]="compact() ? 'truncate text-body font-semibold' : ''"
+        [id]="titleId"
+      >
+        {{ title() }}
+      </h1>
+      @if (description()) {
+        <div
+          class="grid transition-[grid-template-rows,opacity] duration-200 ease-out-strong motion-reduce:transition-none"
+          [class]="compact() ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr]'"
+        >
+          <div class="min-h-0 overflow-hidden">
+            <p class="pt-1 text-pretty text-ink-muted">{{ description() }}</p>
+          </div>
+        </div>
+      }
     }
   </header>
 
@@ -47,7 +67,7 @@
     <ng-content select="[pageToolbar]" />
   </div>
 
-  <div class="min-h-0 flex-1 overflow-auto p-4 sm:p-6">
+  <div #content class="min-h-0 flex-1 overflow-auto p-4 sm:p-6">
     <ng-content />
   </div>
 </section>

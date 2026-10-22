@@ -27,6 +27,17 @@ describe('ChargebackDueDateComponent', () => {
     expect(element.dataset['tone']).toBe('default');
   });
 
+  it('puts the days left next to the date in the inline layout', () => {
+    const fixture = TestBed.createComponent(ChargebackDueDateComponent);
+    fixture.componentRef.setInput('date', '2026-11-15');
+    fixture.componentRef.setInput('layout', 'inline');
+    fixture.detectChanges();
+    const time = (fixture.nativeElement as HTMLElement).querySelector('time');
+
+    expect(time?.classList.contains('flex-col')).toBe(false);
+    expect(time?.classList.contains('whitespace-nowrap')).toBe(true);
+  });
+
   it('highlights a due date that is soon', () => {
     const element = render('2026-10-25', 20);
 

@@ -64,7 +64,9 @@
   --color-hover: var(--color-overlay-05);
   --color-pressed: var(--color-overlay-10);
   --color-divider: var(--color-overlay-07);
-
+  --color-row-hover: color-mix(in srgb, var(--color-grayscale-100) 3%, var(--color-white));
+  --color-row-selected: var(--color-accent-05);
+  --color-row-selected-hover: color-mix(in srgb, var(--color-accent-15) 60%, var(--color-white));
   --color-sidebar: var(--color-par-100);
   --color-sidebar-hover: var(--color-par-80);
   --color-sidebar-pressed: var(--color-par-60);
@@ -99,6 +101,9 @@
   #{'--text-*'}: initial;
   --text-micro: 0.625rem;
   --text-micro--line-height: 0.875rem;
+  --text-tag: 0.625rem;
+  --text-tag--line-height: 0.75rem;
+  --text-tag--letter-spacing: 0.02em;
   --text-caption: 0.6875rem;
   --text-caption--line-height: 1rem;
   --text-caption--letter-spacing: 0.006em;
@@ -123,9 +128,10 @@
 
   #{'--shadow-*'}: initial;
   --shadow-header: 0 1px 1px rgb(0 0 0 / 0.15);
-  --shadow-card: 0 0 0 1px rgb(0 0 0 / 0.05), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-card: 0 0 0 1px rgb(0 0 0 / 0.05), 0 2px 5px 0 rgb(0 0 0 / 0.05);
   --shadow-menu: 0 5px 20px 0 rgb(0 0 0 / 0.1), 0 0 0 1px rgb(0 0 0 / 0.05);
-  --shadow-button: 0 1px 0 rgb(0 0 0 / 0.08), inset 0 -1px 0 rgb(0 0 0 / 0.1);
+  --shadow-button-primary: 0 1px 0 rgb(0 0 0 / 0.08), inset 0 -1px 0 rgb(0 0 0 / 0.1);
+  --shadow-button-secondary: 0 1px 0 rgb(0 0 0 / 0.06);
   --shadow-focus: 0 0 0 2px rgb(90 85 227 / 0.7);
   --shadow-sidebar-focus: inset 0 0 0 1.5px var(--color-accent-60);
 
@@ -135,6 +141,7 @@
   --ease-out: ease-out;
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-icon: cubic-bezier(0.2, 0, 0, 1);
 }
 
 @layer base {

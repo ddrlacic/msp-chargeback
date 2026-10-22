@@ -1,0 +1,36 @@
+<div
+  role="tablist"
+  class="flex gap-4 overflow-x-auto overflow-y-hidden border-b border-divider [scrollbar-width:none]"
+  [attr.aria-label]="label"
+>
+  @for (item of items(); track item.tab; let index = $index) {
+    <button
+      #tab
+      type="button"
+      role="tab"
+      class="relative flex h-12 shrink-0 items-center gap-1.5 whitespace-nowrap transition-[color,box-shadow] duration-200 ease-in-out focus-visible:-outline-offset-2"
+      [class]="
+        item.tab === active()
+          ? 'text-brand-primary after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-brand-primary'
+          : 'text-ink-muted hover:text-ink hover:shadow-[inset_0_-2px_0_var(--color-grayscale-20)] active:shadow-[inset_0_-2px_0_var(--color-accent-40)]'
+      "
+      [id]="getTabId(item.tab)"
+      [attr.aria-selected]="item.tab === active()"
+      [attr.aria-controls]="panelId()"
+      [tabIndex]="item.tab === active() ? 0 : -1"
+      [attr.data-tab]="item.tab"
+      (click)="activeChange.emit(item.tab)"
+      (keydown)="onKeydown($event, index)"
+    >
+      <span class="text-body font-semibold">{{ item.label }}</span>
+      <span
+        class="inline-grid h-[15px] min-w-[15px] place-items-center rounded-[10px] px-[5px] text-tag font-semibold tabular-nums transition-[background-color,color] duration-200 ease-in-out"
+        [class]="
+          item.tab === active() ? 'bg-accent-15 text-brand-primary' : 'bg-overlay-05 text-ink-muted'
+        "
+      >
+        {{ item.count }}
+      </span>
+    </button>
+  }
+</div>

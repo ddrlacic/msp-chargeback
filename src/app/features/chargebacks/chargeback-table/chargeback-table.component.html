@@ -1,0 +1,231 @@
+@if (rows().length) {
+  <div
+    class="@container relative overflow-auto overscroll-x-contain rounded-md border border-line bg-white [scrollbar-width:thin] focus-visible:-outline-offset-2"
+    role="region"
+    tabindex="0"
+    [attr.aria-label]="copy.CAPTION"
+  >
+    <table class="table-fixed border-separate border-spacing-0" [style.width.px]="tableWidth()">
+      <caption class="sr-only">
+        {{
+          copy.CAPTION
+        }}
+      </caption>
+      <colgroup>
+        <col [style.width.px]="selectColumnWidth" />
+        @for (column of columns; track column.key) {
+          <col [style.width.px]="columnWidths()[column.key]" />
+        }
+        <col [style.width.px]="actionColumnWidth()" />
+      </colgroup>
+
+      <thead>
+        <tr>
+          <th
+            scope="col"
+            class="sticky top-0 left-0 z-30 h-10 border-r border-b border-line bg-white p-0"
+          >
+            <label class="flex h-10 cursor-pointer items-center justify-center">
+              <app-checkbox
+                [checked]="allSelected()"
+                [indeterminate]="someSelected()"
+                [ariaLabel]="copy.SELECT_ALL"
+                (checkedChange)="toggleAll($event)"
+              />
+            </label>
+          </th>
+          @for (column of columns; track column.key; let last = $last) {
+            <th
+              scope="col"
+              class="sticky top-0 h-10 border-b border-line bg-white p-0 text-left font-normal"
+              [class]="
+                column.key === 'caseId'
+                  ? 'left-10 z-30 border-r'
+                  : last
+                    ? 'z-20'
+                    : 'z-20 border-r'
+              "
+              [attr.aria-sort]="ariaSort(column.key)"
+            >
+              <button
+                type="button"
+                class="flex h-10 w-full items-center gap-1.5 px-3 text-small whitespace-nowrap transition-[color] duration-200 ease-in-out focus-visible:-outline-offset-2"
+                [class]="
+                  (sort().key === column.key ? 'text-ink' : 'text-ink-muted hover:text-ink') +
+                  (column.align === 'end' ? ' justify-end' : '')
+                "
+                (click)="sortChange.emit(column.key)"
+              >
+                <span class="relative size-4 shrink-0" aria-hidden="true">
+                  <span
+                    class="absolute inset-0 transition-[opacity,scale,filter] duration-200 ease-icon motion-reduce:transition-none"
+                    [class]="iconClass(column.key, 'column')"
+                  >
+                    <lucide-icon [name]="column.icon" class="block size-4" [strokeWidth]="1.5" />
+                  </span>
+                  <span
+                    class="absolute inset-0 transition-[opacity,scale,filter] duration-200 ease-icon motion-reduce:transition-none"
+                    [class]="iconClass(column.key, 'asc')"
+                  >
+                    <lucide-icon name="arrow-up" class="block size-4" [strokeWidth]="1.5" />
+                  </span>
+                  <span
+                    class="absolute inset-0 transition-[opacity,scale,filter] duration-200 ease-icon motion-reduce:transition-none"
+                    [class]="iconClass(column.key, 'desc')"
+                  >
+                    <lucide-icon name="arrow-down" class="block size-4" [strokeWidth]="1.5" />
+                  </span>
+                </span>
+                <span class="truncate">{{ labels[column.key] }}</span>
+              </button>
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                tabindex="0"
+                class="group/resize absolute inset-y-0 right-0 z-10 w-2 cursor-col-resize touch-none outline-none"
+                [attr.aria-label]="copy.RESIZE(labels[column.key])"
+                [attr.aria-valuenow]="columnWidths()[column.key]"
+                [attr.aria-valuemin]="column.minWidth"
+                [attr.aria-valuemax]="column.maxWidth"
+                (pointerdown)="startResize($event, column)"
+                (pointermove)="moveResize($event)"
+                (pointerup)="endResize($event)"
+                (pointercancel)="endResize($event)"
+                (dblclick)="resetWidth(column)"
+                (keydown)="onResizeKey($event, column)"
+              >
+                <span
+                  class="absolute inset-y-2 right-0 w-0.5 rounded-full transition-[background-color] duration-150 ease-in-out group-hover/resize:bg-brand-primary group-focus-visible/resize:bg-brand-primary"
+                  [class.bg-brand-primary]="resizing() === column.key"
+                ></span>
+              </div>
+            </th>
+          }
+          <th
+            scope="col"
+            class="sticky top-0 z-20 h-10 border-b border-l border-line bg-white px-3 text-left text-small font-normal whitespace-nowrap text-ink-muted @4xl:right-0 @4xl:z-30"
+          >
+            <span #actionContent class="inline-flex items-center gap-1.5">
+              <lucide-icon
+                name="mouse-pointer-click"
+                class="block size-4 shrink-0"
+                [strokeWidth]="1.5"
+                aria-hidden="true"
+              />
+              {{ copy.ACTION }}
+            </span>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (item of viewRows(); track item.row.caseId) {
+          <tr
+            class="group cursor-pointer"
+            [attr.data-selected]="isSelected(item.row.caseId) ? '' : null"
+            [attr.data-state]="item.row.state"
+            (click)="onRowClick($event, item.row.caseId)"
+          >
+            <td
+              class="sticky left-0 z-10 h-10 border-r border-b border-line bg-white p-0 group-last:border-b-0 group-hover:bg-row-hover group-data-selected:bg-row-selected group-data-selected:group-hover:bg-row-selected-hover pointer-coarse:h-11"
+            >
+              <label
+                class="flex h-10 cursor-pointer items-center justify-center pointer-coarse:h-11"
+              >
+                <app-checkbox
+                  [checked]="isSelected(item.row.caseId)"
+                  [ariaLabel]="copy.SELECT_ROW(item.row.caseId)"
+                  (checkedChange)="toggleRow(item.row.caseId, $event)"
+                />
+              </label>
+            </td>
+            <td
+              class="sticky left-10 z-10 h-10 border-r border-b border-line bg-white px-3 whitespace-nowrap group-last:border-b-0 group-hover:bg-row-hover group-data-selected:bg-row-selected group-data-selected:group-hover:bg-row-selected-hover pointer-coarse:h-11"
+            >
+              <a
+                class="block truncate font-semibold tabular-nums underline-offset-2 hover:underline"
+                [id]="item.linkId"
+                [routerLink]="['/chargebacks', item.row.caseId]"
+              >
+                {{ item.row.caseId }}
+              </a>
+            </td>
+            <td [class]="cellClass">
+              <app-chargeback-status-badge [status]="item.row.status" />
+            </td>
+            <td [class]="cellClass">
+              @if (item.row.dueDate; as due) {
+                <app-chargeback-due-date
+                  class="max-w-full overflow-hidden"
+                  layout="inline"
+                  [date]="due.date"
+                  [windowDays]="due.windowDays"
+                />
+              } @else {
+                <span class="text-ink-placeholder" aria-hidden="true">—</span>
+                <span class="sr-only">{{ copy.NO_DUE_DATE }}</span>
+              }
+            </td>
+            <td [class]="cellClass" class="text-right tabular-nums">
+              <span class="text-ink-subtle">{{ item.amount.symbol }}</span
+              >{{ item.amount.value }}
+            </td>
+            <td [class]="cellClass">
+              <span class="block truncate" [title]="item.row.reason">{{ item.row.reason }}</span>
+            </td>
+            <td [class]="cellClass">
+              <span
+                class="block truncate tabular-nums"
+                aria-hidden="true"
+                [title]="item.cardLabel"
+                >{{ item.card }}</span
+              >
+              <span class="sr-only">{{ item.cardLabel }}</span>
+            </td>
+            <td [class]="cellClass" class="tabular-nums">
+              <span class="block truncate">{{ item.row.orderReference }}</span>
+            </td>
+            <td [class]="cellClass" class="tabular-nums">{{ item.transactionDate }}</td>
+            <td [class]="cellClass">
+              <span class="block truncate" [title]="item.location">{{
+                item.row.locationName
+              }}</span>
+            </td>
+            <td [class]="cellClass" class="tabular-nums">{{ item.received }}</td>
+            <td [class]="lastCellClass" class="tabular-nums">{{ item.lastUpdated }}</td>
+            <td
+              class="h-10 border-b border-l border-line bg-white px-3 group-last:border-b-0 group-hover:bg-row-hover group-data-selected:bg-row-selected group-data-selected:group-hover:bg-row-selected-hover pointer-coarse:h-11 @4xl:sticky @4xl:right-0 @4xl:z-10"
+            >
+              <a
+                #actionContent
+                class="relative inline-flex h-7 items-center rounded-sm border px-2.5 whitespace-nowrap transition-[background-color,border-color,scale] duration-200 ease-in-out after:absolute after:inset-x-0 after:-inset-y-1.5 active:scale-[0.96] pointer-coarse:after:-inset-y-2 motion-reduce:active:scale-100"
+                [class]="
+                  item.row.actionStyle === 'invisible'
+                    ? 'border-transparent font-semibold text-brand-primary hover:bg-hover active:bg-pressed'
+                    : 'border-transparent text-ink hover:bg-hover active:bg-pressed'
+                "
+                [routerLink]="['/chargebacks', item.row.caseId]"
+                [attr.aria-describedby]="item.linkId"
+                [attr.data-style]="item.row.actionStyle"
+              >
+                {{ item.row.actionLabel }}
+              </a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-2 flex items-center justify-between gap-4 text-small">
+    <span class="truncate text-ink-muted tabular-nums" aria-live="polite">{{ footerLabel() }}</span>
+    <span class="flex shrink-0 items-baseline gap-2 tabular-nums">
+      <span class="text-ink-muted">{{ copy.TOTAL }}</span>
+      <span class="text-body font-semibold text-ink">{{ total() }}</span>
+    </span>
+  </div>
+} @else {
+  <div class="flex min-h-80 flex-col rounded-md border border-line bg-white">
+    <ng-content />
+  </div>
+}

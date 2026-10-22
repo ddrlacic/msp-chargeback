@@ -1,4 +1,8 @@
-<time class="flex flex-col tabular-nums" [attr.datetime]="date()">
+<time
+  class="flex tabular-nums"
+  [class]="layout() === 'inline' ? 'items-baseline gap-2 whitespace-nowrap' : 'flex-col'"
+  [attr.datetime]="date()"
+>
   <span class="text-body text-ink">{{ info().dateLabel }}</span>
   <span class="flex items-center gap-1 text-small" [class]="toneClass()">
     @switch (info().tone) {

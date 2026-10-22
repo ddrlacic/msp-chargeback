@@ -1,22 +1,68 @@
-<app-page [title]="copy.TITLE" [description]="copy.DESCRIPTION">
-  <ul class="divide-y divide-line">
-    @for (row of rows(); track row.caseId) {
-      <li>
-        <a
-          class="-mx-2 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-sm px-2 py-3 transition-[background-color] duration-200 ease-in-out hover:bg-hover"
-          [routerLink]="['/chargebacks', row.caseId]"
+<app-page [title]="copy.TITLE">
+  <div class="flex min-h-full flex-col gap-4 sm:gap-6">
+    <app-chargeback-summary [summary]="summary()" />
+
+    <div class="flex flex-col gap-4">
+      <app-chargeback-tabs
+        [tabs]="tabCounts()"
+        [active]="tab()"
+        [panelId]="panelId"
+        (activeChange)="onTabChange($event)"
+      />
+
+      <div class="flex flex-wrap items-center gap-2">
+        <app-chargeback-filters
+          [filters]="filters()"
+          [locations]="locations()"
+          (filtersChange)="onFiltersChange($event)"
+          (clear)="clearFilters()"
+        />
+        <button
+          type="button"
+          class="relative inline-flex h-[34px] shrink-0 items-center gap-2 rounded-sm border border-line-strong bg-white px-3 font-semibold whitespace-nowrap text-ink-strong shadow-button-secondary transition-[background-color,border-color,scale] duration-200 ease-in-out after:absolute after:inset-x-0 after:-inset-y-[3px] enabled:hover:border-grayscale-40 enabled:hover:bg-canvas enabled:active:scale-[0.96] disabled:cursor-not-allowed disabled:text-ink-placeholder disabled:shadow-none motion-reduce:active:scale-100 pointer-coarse:after:-inset-y-[5px]"
+          [disabled]="!rows().length"
+          (click)="exportCases()"
         >
-          <span class="w-24 font-semibold tabular-nums">{{ row.caseId }}</span>
-          <span class="w-24 text-ink-muted">{{ row.location }}</span>
-          <span class="w-24 text-right tabular-nums">{{ row.amount }}</span>
-          <span class="min-w-0 flex-1 sm:max-w-64">
-            <app-chargeback-status-badge [status]="row.status" />
-          </span>
-          @if (row.replyByDate) {
-            <app-chargeback-due-date [date]="row.replyByDate" [windowDays]="row.windowDays" />
-          }
-        </a>
-      </li>
-    }
-  </ul>
+          <lucide-icon name="download" class="block size-4" aria-hidden="true" />
+          {{ exportLabel() }}
+        </button>
+      </div>
+    </div>
+
+    <app-chargeback-table
+      role="tabpanel"
+      [id]="panelId"
+      [attr.aria-labelledby]="tabId()"
+      [rows]="rows()"
+      [sort]="sort()"
+      [selectedIds]="selectedIds()"
+      [columnWidths]="columnWidths()"
+      (sortChange)="onSortChange($event)"
+      (selectionChange)="selectedIds.set($event)"
+      (columnResize)="onColumnResize($event)"
+      (rowOpen)="openCase($event)"
+    >
+      <div class="flex flex-1 flex-col items-center justify-center px-4 py-12 text-center">
+        <lucide-icon
+          [name]="emptyState().icon"
+          class="block size-10 text-ink-subtle"
+          [strokeWidth]="1.5"
+          aria-hidden="true"
+        />
+        <h2 class="mt-4 text-h3">{{ emptyState().title }}</h2>
+        @if (emptyState().message; as message) {
+          <p class="mt-1.5 max-w-sm text-pretty text-ink-muted">{{ message }}</p>
+        }
+        @if (emptyState().canClear) {
+          <button
+            type="button"
+            class="relative mt-4 inline-flex h-[34px] items-center rounded-sm border border-line-strong bg-white px-3 font-semibold text-ink-strong shadow-button-secondary transition-[background-color,border-color,scale] duration-200 ease-in-out after:absolute after:inset-x-0 after:-inset-y-[3px] hover:border-grayscale-40 hover:bg-canvas active:scale-[0.96] motion-reduce:active:scale-100 pointer-coarse:after:-inset-y-[5px]"
+            (click)="clearFilters()"
+          >
+            {{ copy.FILTERS.CLEAR }}
+          </button>
+        }
+      </div>
+    </app-chargeback-table>
+  </div>
 </app-page>

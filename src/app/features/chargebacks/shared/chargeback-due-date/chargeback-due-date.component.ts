@@ -25,6 +25,7 @@ export class ChargebackDueDateComponent {
 
   readonly date = input.required<string>();
   readonly windowDays = input<number>();
+  readonly layout = input<'stacked' | 'inline'>('stacked');
 
   protected readonly info = computed(() =>
     getDueDateInfo(this.date(), this.clock.now(), this.windowDays()),

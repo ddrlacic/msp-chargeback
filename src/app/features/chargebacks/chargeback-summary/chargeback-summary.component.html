@@ -1,0 +1,18 @@
+<dl class="grid grid-cols-2 gap-2 sm:gap-4 @2xl:grid-cols-4">
+  @for (tile of tiles(); track tile.key) {
+    <div class="min-w-0 rounded-md bg-white px-4 py-3 shadow-card" [attr.data-tile]="tile.key">
+      <dt class="flex items-center gap-1.5 text-ink-muted">
+        <span class="truncate">{{ tile.label }}</span>
+        @if (tile.urgent) {
+          <lucide-icon
+            name="clock"
+            class="block size-3.5 shrink-0 text-needs-action-text"
+            aria-hidden="true"
+          />
+        }
+      </dt>
+      <dd class="text-h2 font-bold text-ink tabular-nums">{{ tile.value }}</dd>
+      <dd class="mt-0.5 truncate text-small text-ink-muted tabular-nums">{{ tile.detail }}</dd>
+    </div>
+  }
+</dl>
