@@ -46,7 +46,7 @@
     @for (option of options(); track option.value) {
       @if (multiple()) {
         <label
-          class="flex h-10 cursor-pointer items-center gap-3 px-3 transition-[background-color] duration-200 ease-in-out hover:bg-canvas pointer-coarse:h-11"
+          class="flex h-10 items-center gap-3 px-3 transition-[background-color] duration-200 ease-in-out hover:bg-canvas pointer-coarse:h-11"
         >
           <app-checkbox
             [checked]="isSelected(option.value)"
@@ -61,7 +61,7 @@
         </label>
       } @else {
         <label
-          class="flex h-10 cursor-pointer items-center gap-3 px-3 transition-[background-color] duration-200 ease-in-out hover:bg-canvas has-focus-visible:outline-2 has-focus-visible:-outline-offset-2 has-focus-visible:outline-brand-primary pointer-coarse:h-11"
+          class="flex h-10 items-center gap-3 px-3 transition-[background-color] duration-200 ease-in-out hover:bg-canvas has-focus-visible:outline-2 has-focus-visible:-outline-offset-2 has-focus-visible:outline-brand-primary pointer-coarse:h-11"
           (click)="onOptionClick($event)"
         >
           <input

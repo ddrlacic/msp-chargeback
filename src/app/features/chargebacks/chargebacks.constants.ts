@@ -97,6 +97,13 @@ export const CHARGEBACK_STATE_LABELS: Record<ChargebackColorState, string> = {
   lost: 'Lost',
 };
 
+export const CARD_NETWORK_LOGOS: Record<CardNetwork, string> = {
+  visa: 'card-networks/visa.svg',
+  mastercard: 'card-networks/mastercard.svg',
+  amex: 'card-networks/amex.svg',
+  discover: 'card-networks/discover.svg',
+};
+
 export const CARD_NETWORK_LABELS: Record<CardNetwork, string> = {
   visa: 'Visa',
   mastercard: 'Mastercard',
@@ -158,16 +165,12 @@ const countLabel = (count: number, singular: string, plural: string) =>
 export const CHARGEBACKS_CONSTANTS = {
   LIST: {
     TITLE: 'Chargebacks',
-    SUMMARY: {
-      DUE_SOON: 'Due soon',
-      DISPUTED: (amount: string) => `${amount} disputed`,
-      RETURNED: (amount: string) => `${amount} returned`,
-      NEXT_DUE: (date: string) => `Next due ${date}`,
-      NOTHING_DUE_SOON: 'Nothing due soon',
-    },
     TABS: {
       LABEL: 'Case status',
       ALL: 'All',
+      DISPUTED: (amount: string) => `${amount} disputed`,
+      RETURNED: (amount: string) => `${amount} returned`,
+      DUE_SOON: (count: number) => `${count} due soon`,
     },
     SEARCH: {
       LABEL: 'Search cases',

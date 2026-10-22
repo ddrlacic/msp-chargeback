@@ -4,11 +4,10 @@ import { clampColumnWidth } from './chargeback-table/chargeback-table.constants'
 import { ChargebackListFilters, ChargebackRow } from './chargebacks.types';
 import {
   clearListFilters,
-  countByTab,
+  countDueSoon,
   DEFAULT_LIST_FILTERS,
   DEFAULT_LIST_SORT,
   getFilterChips,
-  getListSummary,
   getLocationOptions,
   getNextSort,
   getReceivedRange,
@@ -16,6 +15,7 @@ import {
   matchesFilters,
   removeListFilter,
   sortRows,
+  summarizeTabs,
   toChargebackRow,
   toCsv,
 } from './chargebacks.utils';
@@ -171,24 +171,20 @@ describe('chargebacks list utils', () => {
   });
 
   describe('tabs and summary', () => {
-    it('counts cases per state', () => {
-      expect(countByTab(rows)).toEqual([
+    it('counts and sums cases per state, with what was returned for won cases', () => {
+      expect(summarizeTabs(rows).map(({ tab, count }) => ({ tab, count }))).toEqual([
         { tab: 'all', count: 17 },
         { tab: 'needs-action', count: 7 },
         { tab: 'in-review', count: 4 },
         { tab: 'won', count: 3 },
         { tab: 'lost', count: 3 },
       ]);
+      const amounts = summarizeTabs(rows).map((item) => item.amount);
+      expect(amounts.slice(1, 4)).toEqual([1053.75, 522.89, 234.05]);
     });
 
-    it('sums what needs action, what is due soon, what is in review and what was won', () => {
-      expect(getListSummary(rows)).toEqual({
-        needsAction: { count: 7, amount: 1053.75 },
-        dueSoon: { count: 4, nextDueDate: '2026-10-23' },
-        inReview: { count: 4, amount: 522.89 },
-        won: { count: 3, amount: 234.05 },
-        currency: 'USD',
-      });
+    it('counts the cases that need action and are due soon', () => {
+      expect(countDueSoon(rows)).toBe(4);
     });
 
     it('lists each location once, by name', () => {

@@ -17,7 +17,11 @@ import { LucideAngularModule } from 'lucide-angular';
 import { CheckboxComponent } from '../../../shared/components/checkbox/checkbox.component';
 import { formatDate } from '../../../shared/utils/date.utils';
 import { formatMoney, formatMoneyParts } from '../../../shared/utils/money.utils';
-import { CHARGEBACKS_CONSTANTS, COLUMN_LABELS } from '../chargebacks.constants';
+import {
+  CARD_NETWORK_LOGOS,
+  CHARGEBACKS_CONSTANTS,
+  COLUMN_LABELS,
+} from '../chargebacks.constants';
 import { ChargebackRow, ChargebackSort, ColumnKey } from '../chargebacks.types';
 import { sumAmounts } from '../chargebacks.utils';
 import { ChargebackDueDateComponent } from '../shared/chargeback-due-date/chargeback-due-date.component';
@@ -97,7 +101,8 @@ export class ChargebackTableComponent {
       row,
       linkId: `chargeback-row-${row.caseId}`,
       amount: formatMoneyParts(row.amount, row.currency),
-      card: `${row.networkLabel} •••• ${row.cardLastFour}`,
+      card: `•••• ${row.cardLastFour}`,
+      cardLogo: CARD_NETWORK_LOGOS[row.network],
       cardLabel: this.copy.CARD(row.networkLabel, row.cardLastFour),
       location: `${row.dbaName} · ${row.merchantId}`,
       transactionDate: formatDate(row.transactionDate),

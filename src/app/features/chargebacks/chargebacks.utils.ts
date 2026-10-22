@@ -21,7 +21,6 @@ import {
 } from './chargebacks.constants';
 import {
   ChargebackListFilters,
-  ChargebackListSummary,
   ChargebackRow,
   ChargebackSort,
   ColumnKey,
@@ -30,7 +29,7 @@ import {
   LocationOption,
   ReceivedPreset,
   SortDirection,
-  TabCount,
+  TabSummary,
 } from './chargebacks.types';
 import { getDueDateInfo } from './shared/chargeback-due-date/chargeback-due-date.utils';
 
@@ -177,11 +176,24 @@ export function matchesTab(row: ChargebackRow, tab: ListTab): boolean {
   return tab === 'all' || row.state === tab;
 }
 
-export function countByTab(rows: readonly ChargebackRow[]): readonly TabCount[] {
-  return LIST_TABS.map((tab) => ({
-    tab,
-    count: rows.filter((row) => matchesTab(row, tab)).length,
-  }));
+export function summarizeTabs(rows: readonly ChargebackRow[]): readonly TabSummary[] {
+  return LIST_TABS.map((tab) => {
+    const tabRows = rows.filter((row) => matchesTab(row, tab));
+    return {
+      tab,
+      count: tabRows.length,
+      amount:
+        tab === 'won'
+          ? roundMoney(tabRows.reduce((total, row) => total + row.amountCredited, 0))
+          : sumAmounts(tabRows),
+    };
+  });
+}
+
+export function countDueSoon(rows: readonly ChargebackRow[]): number {
+  return rows.filter(
+    (row) => row.state === 'needs-action' && row.dueDate && row.dueDate.tone !== 'default',
+  ).length;
 }
 
 export function sortRows(
@@ -217,26 +229,6 @@ export function getLocationOptions(rows: readonly ChargebackRow[]): readonly Loc
     });
   }
   return [...byMerchant.values()].sort((a, b) => compareText(a.locationName, b.locationName));
-}
-
-export function getListSummary(rows: readonly ChargebackRow[]): ChargebackListSummary {
-  const needsAction = rows.filter((row) => row.state === 'needs-action');
-  const inReview = rows.filter((row) => row.state === 'in-review');
-  const won = rows.filter((row) => row.state === 'won');
-  const dueSoon = needsAction
-    .filter((row) => row.dueDate && row.dueDate.tone !== 'default')
-    .map((row) => row.dueDate?.date ?? '')
-    .sort(compareText);
-  return {
-    needsAction: { count: needsAction.length, amount: sumAmounts(needsAction) },
-    dueSoon: { count: dueSoon.length, nextDueDate: dueSoon[0] },
-    inReview: { count: inReview.length, amount: sumAmounts(inReview) },
-    won: {
-      count: won.length,
-      amount: roundMoney(won.reduce((total, row) => total + row.amountCredited, 0)),
-    },
-    currency: rows[0]?.currency ?? 'USD',
-  };
 }
 
 export function sumAmounts(rows: readonly Pick<ChargebackRow, 'amount'>[]): number {

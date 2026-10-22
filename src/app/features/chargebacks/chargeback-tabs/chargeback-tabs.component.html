@@ -1,6 +1,6 @@
 <div
   role="tablist"
-  class="flex gap-4 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_var(--color-divider)] [scrollbar-width:none]"
+  class="-mx-4 -my-2 flex snap-x scroll-px-4 gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none] sm:-mx-6 sm:scroll-px-6 sm:gap-3 sm:px-6"
   [attr.aria-label]="label"
 >
   @for (item of items(); track item.tab; let index = $index) {
@@ -8,12 +8,8 @@
       #tab
       type="button"
       role="tab"
-      class="relative flex h-12 shrink-0 items-center gap-1.5 whitespace-nowrap transition-[color,box-shadow] duration-200 ease-in-out focus-visible:-outline-offset-2"
-      [class]="
-        item.tab === active()
-          ? 'text-brand-primary after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-brand-primary'
-          : 'text-ink-muted hover:text-ink hover:shadow-[inset_0_-2px_0_var(--color-grayscale-20)] active:shadow-[inset_0_-2px_0_var(--color-accent-40)]'
-      "
+      class="flex min-w-44 flex-1 snap-start flex-col items-start gap-0.5 rounded-md bg-white p-4 text-left transition-[box-shadow] duration-200 ease-in-out"
+      [class]="item.tab === active() ? 'shadow-tile-selected' : 'shadow-tile hover:shadow-tile-hover'"
       [id]="getTabId(item.tab)"
       [attr.aria-selected]="item.tab === active()"
       [attr.aria-controls]="panelId()"
@@ -22,22 +18,17 @@
       (click)="activeChange.emit(item.tab)"
       (keydown)="onKeydown($event, index)"
     >
-      <span class="grid text-body">
-        <span class="col-start-1 row-start-1" [class.font-semibold]="item.tab === active()">{{
-          item.label
-        }}</span>
-        <span class="invisible col-start-1 row-start-1 font-semibold" aria-hidden="true">{{
-          item.label
-        }}</span>
-      </span>
-      <span
-        class="inline-grid h-[15px] min-w-[15px] place-items-center rounded-[10px] px-[5px] text-tag font-semibold tabular-nums transition-[background-color,color] duration-200 ease-in-out"
-        [class]="
-          item.tab === active() ? 'bg-accent-15 text-brand-primary' : 'bg-overlay-05 text-ink-muted'
-        "
+      <span class="max-w-full truncate text-ink-muted"
+        >{{ item.label }}@if (item.dueSoon; as dueSoon) {
+          • <span class="font-semibold text-needs-action-text" data-due-soon>{{ dueSoon }}</span>
+        }</span
       >
-        {{ item.count }}
-      </span>
+      <span class="text-h1 font-bold tracking-[-0.5px] text-ink tabular-nums" data-count>{{
+        item.count
+      }}</span>
+      <span class="max-w-full truncate text-ink-muted tabular-nums" data-detail>{{
+        item.detail
+      }}</span>
     </button>
   }
 </div>

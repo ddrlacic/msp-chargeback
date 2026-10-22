@@ -15,7 +15,6 @@ import { CLOCK } from '../../shared/clock';
 import { FilterChipsComponent } from '../../shared/components/filter-chips/filter-chips.component';
 import { toIsoDate } from '../../shared/utils/date.utils';
 import { ChargebackFiltersComponent } from './chargeback-filters/chargeback-filters.component';
-import { ChargebackSummaryComponent } from './chargeback-summary/chargeback-summary.component';
 import {
   ChargebackTableComponent,
   ColumnResize,
@@ -26,9 +25,8 @@ import { CHARGEBACKS_CONSTANTS, LIST_TAB_EMPTY_COPY } from './chargebacks.consta
 import { ChargebackListFilters, ColumnKey, ListTab } from './chargebacks.types';
 import {
   clearListFilters,
-  countByTab,
+  countDueSoon,
   getFilterChips,
-  getListSummary,
   getLocationOptions,
   getNextSort,
   hasActiveFilters,
@@ -36,6 +34,7 @@ import {
   matchesTab,
   removeListFilter,
   sortRows,
+  summarizeTabs,
   toChargebackRow,
   toCsv,
 } from './chargebacks.utils';
@@ -46,7 +45,6 @@ const TABLE_PANEL_ID = 'chargebacks-table-panel';
   selector: 'app-chargebacks',
   imports: [
     ChargebackFiltersComponent,
-    ChargebackSummaryComponent,
     ChargebackTableComponent,
     ChargebackTabsComponent,
     FilterChipsComponent,
@@ -88,8 +86,8 @@ export class ChargebacksComponent {
     ),
   );
 
-  protected readonly tabCounts = computed(() => countByTab(this.filteredRows()));
-  protected readonly summary = computed(() => getListSummary(this.filteredRows()));
+  protected readonly tabSummaries = computed(() => summarizeTabs(this.filteredRows()));
+  protected readonly dueSoon = computed(() => countDueSoon(this.filteredRows()));
   protected readonly currency = computed(() => this.allRows()[0]?.currency ?? 'USD');
   protected readonly locations = computed(() => getLocationOptions(this.allRows()));
   protected readonly tabId = computed(() => getTabId(this.tab()));

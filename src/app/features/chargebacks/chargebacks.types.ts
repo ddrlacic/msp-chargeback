@@ -89,15 +89,8 @@ export interface LocationOption {
   readonly locationName: string;
 }
 
-export interface TabCount {
+export interface TabSummary {
   readonly tab: ListTab;
   readonly count: number;
-}
-
-export interface ChargebackListSummary {
-  readonly needsAction: { readonly count: number; readonly amount: number };
-  readonly dueSoon: { readonly count: number; readonly nextDueDate?: string };
-  readonly inReview: { readonly count: number; readonly amount: number };
-  readonly won: { readonly count: number; readonly amount: number };
-  readonly currency: string;
+  readonly amount: number;
 }

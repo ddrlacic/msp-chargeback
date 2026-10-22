@@ -25,7 +25,7 @@
             scope="col"
             class="sticky top-0 left-0 z-30 h-10 border-r border-b border-line bg-white p-0"
           >
-            <label class="flex h-10 cursor-pointer items-center justify-center">
+            <label class="flex h-10 items-center justify-center">
               <app-checkbox
                 [checked]="allSelected()"
                 [indeterminate]="someSelected()"
@@ -146,7 +146,7 @@
               class="sticky left-0 z-10 h-10 border-r border-b border-line bg-white p-0 group-last:border-b-0 group-hover:bg-row-hover group-data-selected:bg-row-selected group-data-selected:group-hover:bg-row-selected-hover pointer-coarse:h-11"
             >
               <label
-                class="flex h-10 cursor-pointer items-center justify-center pointer-coarse:h-11"
+                class="flex h-10 items-center justify-center pointer-coarse:h-11"
               >
                 <app-checkbox
                   [checked]="isSelected(item.row.caseId)"
@@ -191,11 +191,20 @@
             </td>
             <td [class]="cellClass">
               <span
-                class="block truncate tabular-nums"
+                class="flex min-w-0 items-center gap-2"
                 aria-hidden="true"
                 [title]="item.cardLabel"
-                >{{ item.card }}</span
+                data-card
               >
+                <img
+                  class="block h-5 w-auto shrink-0"
+                  width="38"
+                  height="24"
+                  alt=""
+                  [src]="item.cardLogo"
+                />
+                <span class="truncate tabular-nums">{{ item.card }}</span>
+              </span>
               <span class="sr-only">{{ item.cardLabel }}</span>
             </td>
             <td [class]="cellClass" class="tabular-nums">

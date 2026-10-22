@@ -140,6 +140,13 @@
   #{'--shadow-*'}: initial;
   --shadow-header: 0 1px 1px rgb(0 0 0 / 0.15);
   --shadow-card: 0 0 0 1px rgb(0 0 0 / 0.05), 0 2px 5px 0 rgb(0 0 0 / 0.05);
+  --shadow-tile:
+    0 0 0 1px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06), 0 2px 4px 0 rgb(0 0 0 / 0.04);
+  --shadow-tile-hover:
+    0 0 0 1px rgb(0 0 0 / 0.12), 0 2px 4px -1px rgb(0 0 0 / 0.08), 0 4px 8px -1px rgb(0 0 0 / 0.1);
+  --shadow-tile-selected:
+    inset 0 0 0 2px var(--color-accent-100), 0 1px 2px -1px rgb(0 0 0 / 0.06),
+    0 2px 4px 0 rgb(0 0 0 / 0.04);
   --shadow-menu: 0 5px 20px 0 rgb(0 0 0 / 0.1), 0 0 0 1px rgb(0 0 0 / 0.05);
   --shadow-button-primary: 0 1px 0 rgb(0 0 0 / 0.08), inset 0 -1px 0 rgb(0 0 0 / 0.1);
   --shadow-field: inset 0 0 0 1px var(--color-line-strong);

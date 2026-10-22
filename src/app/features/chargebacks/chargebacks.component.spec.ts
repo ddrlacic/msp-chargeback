@@ -69,14 +69,20 @@ describe('ChargebacksComponent', () => {
     expect(element.querySelector('header p')).toBe(null);
   });
 
-  it('summarizes what needs action, what is due soon, what is in review and what was won', () => {
-    const tile = (key: string) =>
-      [...element.querySelectorAll(`[data-tile="${key}"] dt, [data-tile="${key}"] dd`)].map(text);
+  it('shows each status as a card with its count and amount, and flags what is due soon', () => {
+    const card = (tab: string) => element.querySelector(`[role="tab"][data-tab="${tab}"]`);
+    const summary = (tab: string) => [
+      text(card(tab)?.querySelector('[data-count]') ?? null),
+      text(card(tab)?.querySelector('[data-detail]') ?? null),
+    ];
 
-    expect(tile('needs-action')).toEqual(['Needs action', '7', '$1,053.75 disputed']);
-    expect(tile('due-soon')).toEqual(['Due soon', '4', 'Next due Oct 23, 2026']);
-    expect(tile('in-review')).toEqual(['In review', '4', '$522.89 disputed']);
-    expect(tile('won')).toEqual(['Won', '3', '$234.05 returned']);
+    expect(summary('needs-action')).toEqual(['7', '$1,053.75 disputed']);
+    expect(summary('in-review')).toEqual(['4', '$522.89 disputed']);
+    expect(summary('won')).toEqual(['3', '$234.05 returned']);
+    expect(text(card('needs-action')?.firstElementChild ?? null)).toBe('Needs action • 4 due soon');
+    expect(text(card('needs-action')?.querySelector('[data-due-soon]') ?? null)).toBe('4 due soon');
+    expect(element.querySelectorAll('[data-due-soon]').length).toBe(1);
+    expect(element.querySelector('[data-tile]')).toBe(null);
   });
 
   it('lists every case, soonest due date first', () => {
@@ -106,13 +112,21 @@ describe('ChargebacksComponent', () => {
     expect(action.getAttribute('data-style')).toBe('invisible-simple');
   });
 
+  it('shows the card network as a logo next to the last four digits', () => {
+    const card = rowFor('CB-261031').querySelector('[data-card]');
+    const logo = card?.querySelector('img')?.getAttribute('src') ?? '';
+
+    expect(/^card-networks\/(visa|mastercard|amex|discover)\.svg$/.test(logo)).toBe(true);
+    expect(text(card).startsWith('•••• ')).toBe(true);
+  });
+
   it('has no primary buttons in the table', () => {
     expect(element.querySelector('app-chargeback-table .bg-brand-primary')).toBe(null);
   });
 
   it('shows the cases of one state per tab', async () => {
     const wonTab = element.querySelector('[role="tab"][data-tab="won"]');
-    expect(text(wonTab?.lastElementChild ?? null)).toBe('3');
+    expect(text(wonTab?.querySelector('[data-count]') ?? null)).toBe('3');
 
     await click(wonTab);
 
