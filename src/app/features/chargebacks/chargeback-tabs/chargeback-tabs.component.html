@@ -22,7 +22,14 @@
       (click)="activeChange.emit(item.tab)"
       (keydown)="onKeydown($event, index)"
     >
-      <span class="text-body font-semibold">{{ item.label }}</span>
+      <span class="grid text-body">
+        <span class="col-start-1 row-start-1" [class.font-semibold]="item.tab === active()">{{
+          item.label
+        }}</span>
+        <span class="invisible col-start-1 row-start-1 font-semibold" aria-hidden="true">{{
+          item.label
+        }}</span>
+      </span>
       <span
         class="inline-grid h-[15px] min-w-[15px] place-items-center rounded-[10px] px-[5px] text-tag font-semibold tabular-nums transition-[background-color,color] duration-200 ease-in-out"
         [class]="
