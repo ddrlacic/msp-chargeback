@@ -8,10 +8,18 @@ Live: https://ddrlacic.github.io/msp-chargeback/
 
 ```
 npm ci
-ng serve
+npx ng serve
 ```
 
-Open http://localhost:4200/.
+Open http://localhost:4200/#.
+
+To see the current MSP for reference, run it in a second terminal:
+
+```
+cd ../msp-ui && npx ng serve
+```
+
+Open http://localhost:8080/.
 
 ## Test and build
 

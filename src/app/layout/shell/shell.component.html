@@ -1,0 +1,8 @@
+<app-header />
+<app-sidebar />
+<main
+  class="flex h-dvh flex-col pt-[60px] transition-[padding-left] ease-drawer motion-reduce:transition-none"
+  [class]="layout.sidebarOpen() ? 'duration-240 lg:pl-64' : 'duration-200'"
+>
+  <router-outlet />
+</main>

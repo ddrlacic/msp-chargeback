@@ -1,0 +1,32 @@
+---
+description: Which model to use for the main agent and subagents
+alwaysApply: true
+---
+
+# Model usage
+
+- **Main agent: Opus 5.5 High.** It owns design decisions, layout, copy, code for phases 0–5, reviews, and anything the user reads as a final answer.
+- **Composer 2.5 (not the fast variant): research subagents only.** The main agent launches them with `model: composer-2.5` when it needs facts gathered.
+
+## Send to Composer 2.5
+
+- Reading code in `../msp-ui` or `../menu-app` and extracting values (tokens, sizes, file paths, field names)
+- Summarizing docs, web pages and research notes
+- Searching for where something lives
+- Checks with a clear pass/fail: copy against the UX copy principles, handoff files for leftover TBDs, broken links
+- Mechanical wiring with a precise spec (Phase 6 scenario switcher)
+
+## Keep on Opus 5.5 High
+
+- Design judgment: layout, visual hierarchy, interaction, motion
+- UX copy
+- Code that sets patterns for later phases (phases 0–5) and the Phase 7 review
+- Interpreting Mobbin or Figma references
+- Decisions recorded in `docs/handoff/decisions.md`
+
+## How to brief Composer
+
+- Read-only unless the task is explicitly mechanical wiring
+- Give full context: it can't see this chat
+- Ask for a fixed output format (headings, tables, file paths) and "say so if a value isn't found; don't guess"
+- Spot-check two or three facts from its answer before relying on it

@@ -1,0 +1,102 @@
+<aside
+  id="app-sidebar"
+  class="fixed top-[61px] bottom-0 left-0 z-20 flex w-64 flex-col bg-sidebar text-white max-lg:w-[min(288px,85vw)] max-lg:shadow-menu"
+  [class]="sidebarClasses()"
+>
+  <nav
+    class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pt-2 [scrollbar-color:var(--color-par-40)_transparent] [scrollbar-width:thin]"
+    [attr.aria-label]="copy.NAV_LABEL"
+  >
+    <ul class="flex flex-col px-3">
+      @for (item of items; track item.label) {
+        <li class="py-0.5">
+          @if (item.children) {
+            <button
+              type="button"
+              class="relative flex h-10 w-full items-center rounded-md text-left text-body transition-[background-color] duration-[120ms] ease-in-out after:absolute after:inset-0 hover:bg-sidebar-hover focus-visible:shadow-sidebar-focus focus-visible:outline-hidden active:bg-sidebar-pressed pointer-coarse:after:-inset-y-0.5"
+              [class]="isSectionActive(item) ? 'text-sidebar-accent' : 'text-white'"
+              [attr.aria-expanded]="isGroupOpen(item)"
+              [attr.aria-controls]="'sidebar-group-' + $index"
+              (click)="toggleGroup(item)"
+            >
+              <span class="mx-3 flex size-6 shrink-0 items-center justify-center" aria-hidden="true">
+                <lucide-icon
+                  [name]="item.icon"
+                  class="block"
+                  [size]="22"
+                  [strokeWidth]="1.5"
+                  [absoluteStrokeWidth]="true"
+                />
+              </span>
+              <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
+              <span
+                class="mr-2 flex size-6 shrink-0 items-center justify-center transition-[rotate,color] duration-[180ms] ease-in-out motion-reduce:transition-none"
+                [class]="isGroupOpen(item) ? 'rotate-90 text-sidebar-accent' : 'text-sidebar-label'"
+                aria-hidden="true"
+              >
+                <lucide-icon
+                  name="chevron-right"
+                  class="block"
+                  [size]="24"
+                  [strokeWidth]="1.5"
+                  [absoluteStrokeWidth]="true"
+                />
+              </span>
+            </button>
+            @if (isGroupOpen(item)) {
+              <ul class="flex flex-col pt-0.5" [id]="'sidebar-group-' + $index">
+                @for (child of item.children; track child.path) {
+                  <li class="py-0.5">
+                    <a
+                      class="relative flex h-[38px] items-center rounded-md pr-3 pl-12 text-body transition-[background-color] duration-[120ms] ease-in-out after:absolute after:inset-x-0 after:-inset-y-px hover:bg-sidebar-hover focus-visible:shadow-sidebar-focus focus-visible:outline-hidden active:bg-sidebar-pressed pointer-coarse:after:-inset-y-0.5"
+                      [routerLink]="child.path"
+                      routerLinkActive
+                      ariaCurrentWhenActive="page"
+                      #childLink="routerLinkActive"
+                      [class]="
+                        childLink.isActive
+                          ? 'bg-sidebar-hover font-semibold text-sidebar-accent'
+                          : 'text-white'
+                      "
+                      (click)="layout.closeDrawer()"
+                    >
+                      <span class="truncate">{{ child.label }}</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
+          } @else {
+            <a
+              class="relative flex h-10 items-center rounded-md text-body transition-[background-color] duration-[120ms] ease-in-out after:absolute after:inset-0 hover:bg-sidebar-hover focus-visible:shadow-sidebar-focus focus-visible:outline-hidden active:bg-sidebar-pressed pointer-coarse:after:-inset-y-0.5"
+              [routerLink]="item.path"
+              routerLinkActive
+              ariaCurrentWhenActive="page"
+              #link="routerLinkActive"
+              [class]="link.isActive ? 'bg-sidebar-hover font-semibold text-sidebar-accent' : 'text-white'"
+              (click)="layout.closeDrawer()"
+            >
+              <span class="mx-3 flex size-6 shrink-0 items-center justify-center" aria-hidden="true">
+                <lucide-icon
+                  [name]="item.icon"
+                  class="block"
+                  [size]="22"
+                  [strokeWidth]="1.5"
+                  [absoluteStrokeWidth]="true"
+                />
+              </span>
+              <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
+            </a>
+          }
+        </li>
+      }
+    </ul>
+  </nav>
+</aside>
+
+<div
+  class="fixed inset-x-0 top-[61px] bottom-0 z-10 bg-scrim transition-[opacity,visibility] ease-drawer lg:hidden"
+  [class]="layout.drawerOpen() ? 'visible opacity-100 duration-240' : 'invisible opacity-0 duration-200'"
+  aria-hidden="true"
+  (click)="layout.closeDrawer()"
+></div>

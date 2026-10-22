@@ -1,0 +1,53 @@
+<section
+  class="flex min-h-0 flex-1 flex-col rounded-md bg-white shadow-card"
+  [attr.aria-labelledby]="titleId"
+>
+  <header class="shrink-0 border-b border-line p-4 sm:p-6">
+    @if (breadcrumbs().length) {
+      <nav aria-label="Breadcrumb" class="mb-4 sm:mb-6">
+        <ol class="flex min-h-[22px] flex-wrap items-center gap-2">
+          @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
+            <li class="flex min-w-0 items-center gap-2">
+              @if (crumb.link && !last) {
+                <a
+                  class="relative flex min-w-0 text-ink-muted transition-[color] duration-200 ease-in-out after:absolute after:inset-x-0 after:-inset-y-[9px] hover:text-ink pointer-coarse:after:-inset-y-[11px]"
+                  [routerLink]="crumb.link"
+                >
+                  <span class="truncate">{{ crumb.label }}</span>
+                </a>
+              } @else {
+                <span
+                  class="truncate font-semibold text-ink"
+                  [attr.aria-current]="last ? 'page' : null"
+                >
+                  {{ crumb.label }}
+                </span>
+              }
+              @if (!last) {
+                <lucide-icon
+                  name="chevron-right"
+                  class="size-4 shrink-0 text-ink-subtle"
+                  aria-hidden="true"
+                />
+              }
+            </li>
+          }
+        </ol>
+      </nav>
+    }
+    <h1 [id]="titleId">{{ title() }}</h1>
+    @if (description()) {
+      <p class="mt-1 text-pretty text-ink-muted">{{ description() }}</p>
+    }
+  </header>
+
+  <div
+    class="flex shrink-0 flex-wrap items-center gap-2 border-b border-line px-4 py-3 empty:hidden sm:px-6"
+  >
+    <ng-content select="[pageToolbar]" />
+  </div>
+
+  <div class="min-h-0 flex-1 overflow-auto p-4 sm:p-6">
+    <ng-content />
+  </div>
+</section>

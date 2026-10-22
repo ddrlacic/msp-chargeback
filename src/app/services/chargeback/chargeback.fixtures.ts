@@ -1,0 +1,628 @@
+import { addDays, atTime, toIsoDate } from '../../shared/utils/date.utils';
+import {
+  CardNetwork,
+  ChallengeDraft,
+  ChargebackCase,
+  ChargebackCycle,
+  ChargebackDocument,
+  ChargebackDocumentType,
+  ChargebackStatus,
+  TimelineEvent,
+} from './chargeback.types';
+import { getAllowedActions } from './chargeback.utils';
+
+export const FIXTURE_BRAND = {
+  legalEntityName: 'Copper Kettle Hospitality LLC',
+  conceptName: 'Copper Kettle Kitchen',
+  userName: 'Alex Morgan',
+  userEmail: 'alex.morgan@example.com',
+} as const;
+
+export const FIXTURE_LOCATIONS = {
+  downtown: { locationName: 'Downtown', merchantId: 'MID-880101' },
+  riverside: { locationName: 'Riverside', merchantId: 'MID-880102' },
+  airport: { locationName: 'Airport', merchantId: 'MID-880103' },
+  midtown: { locationName: 'Midtown', merchantId: 'MID-880104' },
+} as const;
+
+type FixtureLocation = keyof typeof FIXTURE_LOCATIONS;
+
+type TimelineSeed = Omit<TimelineEvent, 'id'>;
+
+interface CaseSeed {
+  readonly caseId: string;
+  readonly status: ChargebackStatus;
+  readonly cycle: ChargebackCycle;
+  readonly network: CardNetwork;
+  readonly cardLastFour: string;
+  readonly reasonCode: string;
+  readonly reasonDescription: string;
+  readonly location: FixtureLocation;
+  readonly orderNumber: number;
+  readonly transactionDay: number;
+  readonly chargebackDay: number;
+  readonly amount: number;
+  readonly replyByDay?: number;
+  readonly challengedAmount?: number;
+  readonly amountDebited: number;
+  readonly amountCredited: number;
+  readonly documents?: readonly ChargebackDocument[];
+  readonly timeline: readonly TimelineSeed[];
+  readonly draft?: ChallengeDraft;
+  readonly worldpayNote?: string;
+}
+
+const REASONS = {
+  fraud: 'Cardholder says they did not make this payment',
+  notReceived: 'Cardholder says the order never arrived',
+  notAsDescribed: 'Cardholder says the order was not as described',
+  duplicate: 'Cardholder says they were charged twice',
+  notAuthorized: 'Cardholder says they did not authorize this payment',
+} as const;
+
+export function createChargebackFixtures(today: Date): ChargebackCase[] {
+  const day = (offset: number) => toIsoDate(addDays(today, offset));
+  const at = (offset: number, hours: number, minutes = 0) =>
+    atTime(addDays(today, offset), hours, minutes);
+
+  const received = (offset: number, amount: number, network: CardNetwork): TimelineSeed => ({
+    occurredAt: at(offset, 9, 12),
+    cycle: 'first-chargeback',
+    actor: 'cardholder-bank',
+    title: 'Chargeback received',
+    worldpayTerm: network === 'visa' ? 'Dispute' : 'First Chargeback',
+    description: 'The cardholder’s bank disputed this payment',
+    amountChange: -amount,
+  });
+
+  const responseSent = (
+    offset: number,
+    credit?: number,
+    documentIds?: readonly string[],
+  ): TimelineSeed => ({
+    occurredAt: at(offset, 14, 36),
+    cycle: 'first-chargeback',
+    actor: 'merchant',
+    title: 'Response sent to Worldpay',
+    worldpayTerm: 'Represent',
+    amountChange: credit,
+    documentIds,
+  });
+
+  const forwarded = (offset: number): TimelineSeed => ({
+    occurredAt: at(offset, 11, 5),
+    cycle: 'first-chargeback',
+    actor: 'worldpay',
+    title: 'Worldpay sent your response to the cardholder’s bank',
+    worldpayTerm: 'Representment',
+  });
+
+  const preArbitrationFiled = (offset: number, worldpayTerm = 'Pre-Arbitration'): TimelineSeed => ({
+    occurredAt: at(offset, 10, 48),
+    cycle: 'pre-arbitration',
+    actor: 'cardholder-bank',
+    title: 'The issuer challenged your response',
+    worldpayTerm,
+  });
+
+  const doc = (
+    caseId: string,
+    index: number,
+    name: string,
+    type: ChargebackDocumentType,
+    sizeBytes: number,
+    createdDateTime: string,
+  ): ChargebackDocument => ({
+    id: `${caseId}-doc-${index}`,
+    name,
+    type,
+    sizeBytes,
+    securityStatus: 'clean',
+    uploadedBy: FIXTURE_BRAND.userName,
+    createdDateTime,
+  });
+
+  const seeds: CaseSeed[] = [
+    {
+      caseId: 'CB-261018',
+      status: 'action-required',
+      cycle: 'first-chargeback',
+      network: 'visa',
+      cardLastFour: '4821',
+      reasonCode: '10.4',
+      reasonDescription: REASONS.fraud,
+      location: 'downtown',
+      orderNumber: 58213,
+      transactionDay: -32,
+      chargebackDay: -17,
+      amount: 86.4,
+      replyByDay: 3,
+      amountDebited: 86.4,
+      amountCredited: 0,
+      timeline: [received(-17, 86.4, 'visa')],
+    },
+    {
+      caseId: 'CB-261022',
+      status: 'action-required',
+      cycle: 'first-chargeback',
+      network: 'mastercard',
+      cardLastFour: '5530',
+      reasonCode: '4853',
+      reasonDescription: REASONS.notAsDescribed,
+      location: 'riverside',
+      orderNumber: 58377,
+      transactionDay: -19,
+      chargebackDay: -6,
+      amount: 142.75,
+      replyByDay: 24,
+      amountDebited: 142.75,
+      amountCredited: 0,
+      timeline: [received(-6, 142.75, 'mastercard')],
+    },
+    {
+      caseId: 'CB-261031',
+      status: 'action-required',
+      cycle: 'first-chargeback',
+      network: 'amex',
+      cardLastFour: '1006',
+      reasonCode: 'C08',
+      reasonDescription: REASONS.notReceived,
+      location: 'airport',
+      orderNumber: 58402,
+      transactionDay: -15,
+      chargebackDay: -6,
+      amount: 58.2,
+      replyByDay: 1,
+      amountDebited: 58.2,
+      amountCredited: 0,
+      timeline: [received(-6, 58.2, 'amex')],
+    },
+    {
+      caseId: 'CB-260987',
+      status: 'evidence-required',
+      cycle: 'first-chargeback',
+      network: 'discover',
+      cardLastFour: '6011',
+      reasonCode: 'UA02',
+      reasonDescription: REASONS.fraud,
+      location: 'midtown',
+      orderNumber: 57961,
+      transactionDay: -41,
+      chargebackDay: -23,
+      amount: 213,
+      replyByDay: 12,
+      amountDebited: 213,
+      amountCredited: 0,
+      documents: [
+        doc('CB-260987', 1, 'receipt-57961.pdf', 'transaction-receipt', 184_320, at(-1, 16, 20)),
+      ],
+      draft: {
+        savedAt: at(-1, 16, 24),
+        reason: 'cardholder-made-payment',
+        challengedAmount: 213,
+        documentIds: ['CB-260987-doc-1'],
+      },
+      timeline: [received(-23, 213, 'discover')],
+    },
+    {
+      caseId: 'CB-260954',
+      status: 'returned-by-worldpay',
+      cycle: 'first-chargeback',
+      network: 'visa',
+      cardLastFour: '4417',
+      reasonCode: '13.1',
+      reasonDescription: REASONS.notReceived,
+      location: 'downtown',
+      orderNumber: 58011,
+      transactionDay: -27,
+      chargebackDay: -16,
+      amount: 64.9,
+      replyByDay: 4,
+      challengedAmount: 64.9,
+      amountDebited: 64.9,
+      amountCredited: 0,
+      documents: [
+        doc('CB-260954', 1, 'delivery-photo.jpg', 'delivery-proof', 1_204_224, at(-9, 14, 30)),
+      ],
+      worldpayNote:
+        'The delivery photo is hard to read. Upload a clearer copy that shows the delivery address and time.',
+      timeline: [
+        received(-16, 64.9, 'visa'),
+        responseSent(-9, undefined, ['CB-260954-doc-1']),
+        {
+          occurredAt: at(-2, 13, 2),
+          cycle: 'first-chargeback',
+          actor: 'worldpay',
+          title: 'Worldpay returned your response',
+          worldpayTerm: 'Request Declined',
+          description:
+            'The delivery photo is hard to read. Upload a clearer copy that shows the delivery address and time.',
+        },
+      ],
+    },
+    {
+      caseId: 'CB-260921',
+      status: 'response-submitted',
+      cycle: 'first-chargeback',
+      network: 'mastercard',
+      cardLastFour: '5182',
+      reasonCode: '4837',
+      reasonDescription: REASONS.notAuthorized,
+      location: 'riverside',
+      orderNumber: 57890,
+      transactionDay: -30,
+      chargebackDay: -14,
+      amount: 97.3,
+      challengedAmount: 97.3,
+      amountDebited: 97.3,
+      amountCredited: 97.3,
+      documents: [
+        doc('CB-260921', 1, 'receipt-57890.pdf', 'transaction-receipt', 152_576, at(-2, 14, 20)),
+        doc(
+          'CB-260921',
+          2,
+          'signed-authorization.pdf',
+          'authorization-proof',
+          98_304,
+          at(-2, 14, 22),
+        ),
+      ],
+      timeline: [
+        received(-14, 97.3, 'mastercard'),
+        responseSent(-2, 97.3, ['CB-260921-doc-1', 'CB-260921-doc-2']),
+      ],
+    },
+    {
+      caseId: 'CB-260876',
+      status: 'under-review',
+      cycle: 'first-chargeback',
+      network: 'visa',
+      cardLastFour: '4903',
+      reasonCode: '12.6.1',
+      reasonDescription: REASONS.duplicate,
+      location: 'downtown',
+      orderNumber: 57544,
+      transactionDay: -44,
+      chargebackDay: -30,
+      amount: 45.6,
+      challengedAmount: 45.6,
+      amountDebited: 45.6,
+      amountCredited: 0,
+      documents: [doc('CB-260876', 1, 'order-history.pdf', 'invoice', 120_832, at(-18, 10, 5))],
+      timeline: [
+        received(-30, 45.6, 'visa'),
+        responseSent(-18, undefined, ['CB-260876-doc-1']),
+        forwarded(-17),
+      ],
+    },
+    {
+      caseId: 'CB-260843',
+      status: 'pre-arbitration',
+      cycle: 'pre-arbitration',
+      network: 'discover',
+      cardLastFour: '6544',
+      reasonCode: 'RG',
+      reasonDescription: REASONS.notReceived,
+      location: 'airport',
+      orderNumber: 57311,
+      transactionDay: -55,
+      chargebackDay: -40,
+      amount: 129.99,
+      challengedAmount: 129.99,
+      amountDebited: 129.99,
+      amountCredited: 129.99,
+      timeline: [
+        received(-40, 129.99, 'discover'),
+        responseSent(-28, 129.99),
+        {
+          ...preArbitrationFiled(-5),
+          description: 'Worldpay is handling it',
+        },
+      ],
+    },
+    {
+      caseId: 'CB-260815',
+      status: 'pre-arbitration-response-required',
+      cycle: 'pre-arbitration',
+      network: 'visa',
+      cardLastFour: '4675',
+      reasonCode: '13.3',
+      reasonDescription: REASONS.notAsDescribed,
+      location: 'midtown',
+      orderNumber: 57102,
+      transactionDay: -60,
+      chargebackDay: -45,
+      amount: 176.5,
+      replyByDay: 15,
+      challengedAmount: 176.5,
+      amountDebited: 176.5,
+      amountCredited: 0,
+      timeline: [
+        received(-45, 176.5, 'visa'),
+        responseSent(-33),
+        forwarded(-32),
+        preArbitrationFiled(-5),
+      ],
+    },
+    {
+      caseId: 'CB-260790',
+      status: 'decision-needed',
+      cycle: 'pre-arbitration',
+      network: 'mastercard',
+      cardLastFour: '5299',
+      reasonCode: '4853',
+      reasonDescription: REASONS.notAsDescribed,
+      location: 'riverside',
+      orderNumber: 56877,
+      transactionDay: -74,
+      chargebackDay: -60,
+      amount: 312,
+      replyByDay: 9,
+      challengedAmount: 312,
+      amountDebited: 624,
+      amountCredited: 312,
+      timeline: [
+        received(-60, 312, 'mastercard'),
+        responseSent(-45, 312),
+        {
+          ...preArbitrationFiled(-26, 'Arbitration Chargeback'),
+          description: 'The amount was debited again',
+          amountChange: -312,
+        },
+      ],
+    },
+    {
+      caseId: 'CB-260702',
+      status: 'arbitration',
+      cycle: 'arbitration',
+      network: 'visa',
+      cardLastFour: '4130',
+      reasonCode: '13.1',
+      reasonDescription: REASONS.notReceived,
+      location: 'downtown',
+      orderNumber: 56410,
+      transactionDay: -95,
+      chargebackDay: -80,
+      amount: 250,
+      challengedAmount: 250,
+      amountDebited: 250,
+      amountCredited: 0,
+      timeline: [
+        received(-80, 250, 'visa'),
+        responseSent(-65),
+        forwarded(-64),
+        preArbitrationFiled(-40),
+        {
+          occurredAt: at(-34, 9, 40),
+          cycle: 'pre-arbitration',
+          actor: 'cardholder-bank',
+          title: 'The issuer declined your pre-arbitration response',
+          worldpayTerm: 'Issuer Declined Pre-Arbitration',
+        },
+        {
+          occurredAt: at(-30, 15, 18),
+          cycle: 'arbitration',
+          actor: 'merchant',
+          title: 'You took the case to arbitration',
+          worldpayTerm: 'Arbitration',
+          description: 'The card network is making a final decision',
+        },
+      ],
+    },
+    {
+      caseId: 'CB-260655',
+      status: 'won',
+      cycle: 'first-chargeback',
+      network: 'mastercard',
+      cardLastFour: '5407',
+      reasonCode: '4837',
+      reasonDescription: REASONS.notAuthorized,
+      location: 'airport',
+      orderNumber: 56933,
+      transactionDay: -66,
+      chargebackDay: -50,
+      amount: 74.25,
+      challengedAmount: 74.25,
+      amountDebited: 74.25,
+      amountCredited: 74.25,
+      timeline: [
+        received(-50, 74.25, 'mastercard'),
+        responseSent(-38, 74.25),
+        {
+          occurredAt: at(-10, 8, 55),
+          cycle: 'first-chargeback',
+          actor: 'cardholder-bank',
+          title: 'Resolved in your favor',
+          worldpayTerm: 'Chargeback Reversal',
+        },
+      ],
+    },
+    {
+      caseId: 'CB-260611',
+      status: 'partially-won',
+      cycle: 'arbitration',
+      network: 'visa',
+      cardLastFour: '4288',
+      reasonCode: '13.3',
+      reasonDescription: REASONS.notAsDescribed,
+      location: 'midtown',
+      orderNumber: 55620,
+      transactionDay: -136,
+      chargebackDay: -120,
+      amount: 198,
+      challengedAmount: 198,
+      amountDebited: 198,
+      amountCredited: 120,
+      timeline: [
+        received(-120, 198, 'visa'),
+        responseSent(-104),
+        forwarded(-103),
+        preArbitrationFiled(-80),
+        {
+          occurredAt: at(-70, 16, 2),
+          cycle: 'arbitration',
+          actor: 'merchant',
+          title: 'You took the case to arbitration',
+          worldpayTerm: 'Arbitration',
+        },
+        {
+          occurredAt: at(-12, 12, 30),
+          cycle: 'arbitration',
+          actor: 'card-network',
+          title: 'Partially resolved in your favor',
+          worldpayTerm: 'Arbitration Split',
+          amountChange: 120,
+        },
+      ],
+    },
+    {
+      caseId: 'CB-260588',
+      status: 'dispute-withdrawn',
+      cycle: 'first-chargeback',
+      network: 'amex',
+      cardLastFour: '1009',
+      reasonCode: 'C08',
+      reasonDescription: REASONS.notReceived,
+      location: 'riverside',
+      orderNumber: 57720,
+      transactionDay: -21,
+      chargebackDay: -12,
+      amount: 39.8,
+      challengedAmount: 39.8,
+      amountDebited: 39.8,
+      amountCredited: 39.8,
+      timeline: [
+        received(-12, 39.8, 'amex'),
+        responseSent(-7, 39.8),
+        {
+          occurredAt: at(-3, 10, 14),
+          cycle: 'first-chargeback',
+          actor: 'cardholder-bank',
+          title: 'The issuer withdrew the dispute',
+          worldpayTerm: 'Issuer Recalled',
+        },
+      ],
+    },
+    {
+      caseId: 'CB-260540',
+      status: 'lost',
+      cycle: 'pre-arbitration',
+      network: 'discover',
+      cardLastFour: '6223',
+      reasonCode: 'UA02',
+      reasonDescription: REASONS.fraud,
+      location: 'downtown',
+      orderNumber: 56154,
+      transactionDay: -86,
+      chargebackDay: -70,
+      amount: 155.4,
+      challengedAmount: 155.4,
+      amountDebited: 310.8,
+      amountCredited: 155.4,
+      timeline: [
+        received(-70, 155.4, 'discover'),
+        responseSent(-50, 155.4),
+        preArbitrationFiled(-30),
+        {
+          occurredAt: at(-8, 9, 30),
+          cycle: 'pre-arbitration',
+          actor: 'cardholder-bank',
+          title: 'Resolved in the cardholder’s favor',
+          worldpayTerm: 'Unsuccessful Pre-Arbitration',
+          amountChange: -155.4,
+        },
+      ],
+    },
+    {
+      caseId: 'CB-260497',
+      status: 'accepted',
+      cycle: 'first-chargeback',
+      network: 'amex',
+      cardLastFour: '1012',
+      reasonCode: 'F29',
+      reasonDescription: REASONS.fraud,
+      location: 'midtown',
+      orderNumber: 57045,
+      transactionDay: -33,
+      chargebackDay: -20,
+      amount: 52.1,
+      amountDebited: 52.1,
+      amountCredited: 0,
+      timeline: [
+        received(-20, 52.1, 'amex'),
+        {
+          occurredAt: at(-17, 11, 41),
+          cycle: 'first-chargeback',
+          actor: 'merchant',
+          title: 'You accepted the chargeback',
+          worldpayTerm: 'Merchant Accepts Liability',
+        },
+      ],
+    },
+    {
+      caseId: 'CB-260466',
+      status: 'deadline-missed',
+      cycle: 'first-chargeback',
+      network: 'mastercard',
+      cardLastFour: '5076',
+      reasonCode: '4834',
+      reasonDescription: REASONS.duplicate,
+      location: 'airport',
+      orderNumber: 56602,
+      transactionDay: -52,
+      chargebackDay: -40,
+      amount: 88,
+      amountDebited: 88,
+      amountCredited: 0,
+      timeline: [
+        received(-40, 88, 'mastercard'),
+        {
+          occurredAt: at(-10, 0, 5),
+          cycle: 'first-chargeback',
+          actor: 'worldpay',
+          title: 'No response was sent by the due date',
+          worldpayTerm: 'Merchant Assumed',
+        },
+      ],
+    },
+  ];
+
+  return seeds.map((seed) => toCase(seed, day));
+}
+
+function toCase(seed: CaseSeed, day: (offset: number) => string): ChargebackCase {
+  const location = FIXTURE_LOCATIONS[seed.location];
+  return {
+    caseId: seed.caseId,
+    status: seed.status,
+    cycle: seed.cycle,
+    allowedActions: getAllowedActions(seed.status),
+    network: seed.network,
+    cardLastFour: seed.cardLastFour,
+    reasonCode: seed.reasonCode,
+    reasonDescription: seed.reasonDescription,
+    merchantId: location.merchantId,
+    legalEntityName: FIXTURE_BRAND.legalEntityName,
+    dbaName: `${FIXTURE_BRAND.conceptName} ${location.locationName}`,
+    conceptName: FIXTURE_BRAND.conceptName,
+    locationName: location.locationName,
+    transactionId: `TXN-${seed.orderNumber}-01`,
+    orderReference: `ORD-${seed.orderNumber}`,
+    transactionDate: day(seed.transactionDay),
+    transactionAmount: seed.amount,
+    chargebackDate: day(seed.chargebackDay),
+    chargebackAmount: seed.amount,
+    currency: 'USD',
+    replyByDate: seed.replyByDay === undefined ? undefined : day(seed.replyByDay),
+    challengedAmount: seed.challengedAmount,
+    amountDebited: seed.amountDebited,
+    amountCredited: seed.amountCredited,
+    documents: seed.documents ?? [],
+    timeline: seed.timeline.map((event, index) => ({
+      id: `${seed.caseId}-event-${index + 1}`,
+      ...event,
+    })),
+    draft: seed.draft,
+    worldpayNote: seed.worldpayNote,
+  };
+}

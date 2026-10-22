@@ -1,9 +1,22 @@
-<div class="flex min-h-screen">
-  <aside class="w-60 shrink-0 bg-sidebar text-white">
-    <div class="px-4 py-5 text-lg font-semibold">MSP</div>
-  </aside>
-  <main class="flex-1 p-8">
-    <h1 class="text-2xl font-semibold text-ink">Chargebacks</h1>
-    <p class="mt-2 text-ink-muted">Prototype shell. Start building here.</p>
-  </main>
-</div>
+<app-page [title]="copy.TITLE" [description]="copy.DESCRIPTION">
+  <ul class="divide-y divide-line">
+    @for (row of rows(); track row.caseId) {
+      <li>
+        <a
+          class="-mx-2 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-sm px-2 py-3 transition-[background-color] duration-200 ease-in-out hover:bg-hover"
+          [routerLink]="['/chargebacks', row.caseId]"
+        >
+          <span class="w-24 font-semibold tabular-nums">{{ row.caseId }}</span>
+          <span class="w-24 text-ink-muted">{{ row.location }}</span>
+          <span class="w-24 text-right tabular-nums">{{ row.amount }}</span>
+          <span class="min-w-0 flex-1 sm:max-w-64">
+            <app-chargeback-status-badge [status]="row.status" />
+          </span>
+          @if (row.replyByDate) {
+            <app-chargeback-due-date [date]="row.replyByDate" [windowDays]="row.windowDays" />
+          }
+        </a>
+      </li>
+    }
+  </ul>
+</app-page>

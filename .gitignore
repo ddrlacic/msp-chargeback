@@ -39,6 +39,12 @@ testem.log
 /typings
 __screenshots__/
 
+# Local reference docs
+/docs
+
+# Machine-specific skill links
+/.claude
+
 # System files
 .DS_Store
 Thumbs.db

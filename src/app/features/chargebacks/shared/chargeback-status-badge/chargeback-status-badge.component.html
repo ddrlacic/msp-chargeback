@@ -1,0 +1,8 @@
+<span
+  class="inline-flex h-[22px] max-w-full items-center gap-1.5 rounded-full px-2 text-small font-semibold whitespace-nowrap"
+  [class]="classes().badge"
+  [attr.title]="label()"
+>
+  <span class="size-1.5 shrink-0 rounded-full" [class]="classes().dot" aria-hidden="true"></span>
+  <span class="truncate">{{ label() }}</span>
+</span>

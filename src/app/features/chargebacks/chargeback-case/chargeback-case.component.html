@@ -1,0 +1,32 @@
+<app-page
+  [title]="title()"
+  [description]="chargeback()?.reasonDescription"
+  [breadcrumbs]="breadcrumbs()"
+>
+  @if (chargeback(); as chargeback) {
+    <dl class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-[max-content_1fr]">
+      <dt class="text-ink-muted">{{ copy.STATUS }}</dt>
+      <dd><app-chargeback-status-badge [status]="chargeback.status" /></dd>
+      @if (dueDate(); as due) {
+        <dt class="text-ink-muted">{{ copy.DUE }}</dt>
+        <dd><app-chargeback-due-date [date]="due.date" [windowDays]="due.windowDays" /></dd>
+      }
+      <dt class="text-ink-muted">{{ copy.AMOUNT }}</dt>
+      <dd class="tabular-nums">{{ amount() }}</dd>
+      <dt class="text-ink-muted">{{ copy.REASON }}</dt>
+      <dd>{{ chargeback.reasonDescription }}</dd>
+      <dt class="text-ink-muted">{{ copy.LOCATION }}</dt>
+      <dd>{{ chargeback.dbaName }}</dd>
+    </dl>
+  } @else {
+    <div class="flex flex-col items-center px-4 py-16 text-center">
+      <p class="text-pretty text-ink-muted">{{ copy.NOT_FOUND_MESSAGE }}</p>
+      <a
+        class="relative mt-6 inline-flex h-[34px] items-center rounded-sm border border-line-strong bg-white px-3 font-semibold text-ink-strong transition-[background-color,border-color,scale] duration-200 ease-in-out after:absolute after:inset-x-0 after:-inset-y-[3px] hover:border-grayscale-40 hover:bg-canvas active:scale-[0.96] pointer-coarse:after:-inset-y-[5px]"
+        [routerLink]="chargebacksPath"
+      >
+        {{ copy.BACK_TO_LIST }}
+      </a>
+    </div>
+  }
+</app-page>

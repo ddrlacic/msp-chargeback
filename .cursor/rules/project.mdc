@@ -12,6 +12,18 @@ A shareable prototype published to GitHub Pages at https://ddrlacic.github.io/ms
 - **Technology: `../msp-ui`** (Angular 21, zoneless, signals, Tailwind v4, Lucide, Vitest). Follow its rules in `../msp-ui/.cursor/rules/` for code structure, naming and testing.
 - **UI: `../menu-app`** (Management Center). Match its look and behaviour. Look in `../menu-app/frontend-migration/libs/admin-ui` for components and `../menu-app/frontend-migration/libs/admin-ui/src/assets/styles/scss/_01-settings` for tokens. Copy for labels and messages follows `../menu-app/docs/design/ux-copy-principles.md`.
 - Chargeback behaviour and field names: `../msp-ui/src/app/features/home/chargebacks` and `../msp-ui/src/app/services`.
+- Requirements and Worldpay research: `docs/` (git-ignored, local only; start with `docs/README.md`). Never commit it or copy its content into the app.
+
+## Build phases and UI skills
+
+- Build in the phases from `docs/prototype-plan.md`, one phase per chat.
+- UI skills are linked in `.claude/skills/`: `better-ui`, `better-typography`, `better-colors`, `emil-design-eng`, `find-animation-opportunities`. Read the relevant one before UI or motion work.
+
+## Dev handoff spec
+
+- `docs/handoff/` is the build spec for msp-ui developers and their AI agents. Start at `docs/handoff/README.md`.
+- Every prototype change updates the matching handoff file in the same session: status model, screen, component, data, copy, acceptance criteria.
+- New decisions go to `docs/handoff/decisions.md`; unresolved ones to `docs/handoff/open-questions.md`.
 
 ## This repo is public
 
@@ -33,3 +45,4 @@ A shareable prototype published to GitHub Pages at https://ddrlacic.github.io/ms
 
 - The user verifies in the browser. Do not open the prototype yourself; list what changed and what to check.
 - Local server: `ng serve`, then `http://localhost:4200/`.
+- Current msp-ui for reference: `ng serve` in `../msp-ui`, then `http://localhost:8080/`. Its `src/environment.js` points to the dev API locally and is marked `skip-worktree`, so it's never committed.
