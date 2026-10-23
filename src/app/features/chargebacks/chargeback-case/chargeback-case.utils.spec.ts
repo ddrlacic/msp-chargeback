@@ -2,8 +2,8 @@ import { createChargebackFixtures } from '../../../services/chargeback/chargebac
 import { ChargebackCase } from '../../../services/chargeback/chargeback.types';
 import { TEST_TODAY } from '../../../testing/providers';
 import {
-  canUploadDocuments,
   getCaseBanner,
+  getCaseDeadline,
   getCaseDetails,
   getCaseHeader,
   getDocumentRows,
@@ -33,6 +33,23 @@ describe('chargeback case utils', () => {
         order: 'ORD-58213',
         location: 'Copper Kettle Kitchen Downtown',
       });
+    });
+  });
+
+  describe('getCaseDeadline', () => {
+    it('asks for a response by the reply-by date', () => {
+      const chargeback = getCase('CB-261018');
+
+      expect(getCaseDeadline(chargeback)?.title).toBe('Respond by');
+      expect(getCaseDeadline(chargeback)?.date).toBe(chargeback.replyByDate);
+    });
+
+    it('asks for a decision when the issuer challenged the response', () => {
+      expect(getCaseDeadline(getCase('CB-260790'))?.title).toBe('Decide by');
+    });
+
+    it('has no deadline once the case no longer needs action', () => {
+      expect(getCaseDeadline(getCase('CB-260655'))).toBe(undefined);
     });
   });
 
@@ -171,22 +188,24 @@ describe('chargeback case utils', () => {
     expect(details.find((row) => row.key === 'location')?.secondary).toBe('MID-880101');
   });
 
-  describe('documents', () => {
-    it('allows uploads only while the case needs action', () => {
-      expect(canUploadDocuments(getCase('CB-261018'))).toBe(true);
-      expect(canUploadDocuments(getCase('CB-260921'))).toBe(false);
-    });
+  it('shows the card network logo next to the last four digits', () => {
+    const card = getCaseDetails(getCase('CB-260954')).find((row) => row.key === 'card');
 
-    it('locks documents that were sent with a response', () => {
+    expect(card?.value).toBe('•••• 4417');
+    expect(card?.valueLabel).toBe('Visa ending in 4417');
+    expect(card?.logo).toBe('card-networks/visa.svg');
+  });
+
+  describe('documents', () => {
+    it('labels documents that were sent with a response', () => {
       const [row] = getDocumentRows(getCase('CB-260954'));
 
       expect(row.sent).toBe(true);
       expect(row.dateLabel).toBe('Sent to Worldpay Oct 13, 2026');
-      expect(row.canDelete).toBe(false);
       expect(row.canOpen).toBe(true);
     });
 
-    it('lets the merchant delete a draft document', () => {
+    it('labels draft documents with who uploaded them', () => {
       const [row] = getDocumentRows(getCase('CB-260987'));
 
       expect(row).toEqual({
@@ -197,7 +216,6 @@ describe('chargeback case utils', () => {
         status: undefined,
         sent: false,
         canOpen: true,
-        canDelete: true,
       });
     });
 
@@ -211,15 +229,13 @@ describe('chargeback case utils', () => {
         ],
       });
 
-      expect([scanning.status, scanning.canOpen, scanning.canDelete]).toEqual([
+      expect([scanning.status, scanning.canOpen]).toEqual([
         { label: 'Scanning', tone: 'scanning' },
         false,
-        false,
       ]);
-      expect([rejected.status, rejected.canOpen, rejected.canDelete]).toEqual([
+      expect([rejected.status, rejected.canOpen]).toEqual([
         { label: 'Blocked by the security scan', tone: 'error' },
         false,
-        true,
       ]);
     });
   });

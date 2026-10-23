@@ -4,7 +4,6 @@ import { By } from '@angular/platform-browser';
 import { ChargebackStore } from '../../../services/chargeback/chargeback.store';
 import { installDialogPolyfill } from '../../../testing/dialog';
 import { getTestProviders } from '../../../testing/providers';
-import { CaseUploadDialogComponent } from './case-upload-dialog/case-upload-dialog.component';
 import { ChargebackCaseComponent } from './chargeback-case.component';
 
 describe('ChargebackCaseComponent', () => {
@@ -35,16 +34,25 @@ describe('ChargebackCaseComponent', () => {
     fixture.detectChanges();
   }
 
-  it('shows the amount, status and due date in the header', () => {
+  it('shows the amount and status in the header', () => {
     const element = render('CB-261018');
     const header = element.querySelector('app-case-header');
 
     expect(text(element.querySelector('h1'))).toBe('Case CB-261018');
     expect(text(header?.querySelector('p'))).toBe('Disputed amount $86.40');
     expect(text(header?.querySelector('app-chargeback-status-badge'))).toBe('Action required');
-    expect(header?.querySelector('app-chargeback-due-date')?.getAttribute('data-tone')).toBe(
+    expect(header?.querySelector('app-chargeback-due-date')).toBe(null);
+  });
+
+  it('shows the due date in its own section above the amounts', () => {
+    const element = render('CB-261018');
+    const deadline = element.querySelector('app-case-deadline');
+
+    expect(text(deadline?.querySelector('h2'))).toBe('Respond by');
+    expect(deadline?.querySelector('app-chargeback-due-date')?.getAttribute('data-tone')).toBe(
       'soon',
     );
+    expect(deadline?.nextElementSibling?.tagName).toBe('APP-CASE-MONEY');
   });
 
   it('hides the due date when the case does not need action', () => {
@@ -99,55 +107,28 @@ describe('ChargebackCaseComponent', () => {
     ]);
   });
 
-  it('hides uploads and deletes once a response is submitted', () => {
-    const documents = render('CB-260921').querySelector('app-case-documents');
+  it('lists documents to preview and download without upload or delete', () => {
+    const documents = render('CB-260987').querySelector('app-case-documents');
 
-    expect(documents?.querySelectorAll('li[data-document]').length).toBe(2);
-    expect(documents?.querySelector('[aria-label^="Delete"]')).toBe(null);
-    expect(documents?.querySelector('h2 + button')).toBe(null);
+    expect(documents?.querySelectorAll('li[data-document]').length).toBe(1);
+    expect(documents?.querySelector('[aria-label="Download receipt-57961.pdf"]')).not.toBe(null);
+    expect(documents?.querySelectorAll('button').length).toBe(2);
   });
 
-  it('uploads documents that stay blocked while they are scanned', () => {
-    const element = render('CB-261018');
-    const documents = element.querySelector('app-case-documents');
-
-    expect(text(documents?.querySelector('h3'))).toBe('No documents');
-
-    click(documents?.querySelector('h2 + button') ?? null);
-    expect(element.querySelector('app-case-upload-dialog dialog')?.hasAttribute('open')).toBe(true);
-
-    const dialog = fixture.debugElement.query(By.directive(CaseUploadDialogComponent));
-    const file = new File(['receipt'], 'receipt.pdf', { type: 'application/pdf' });
-    dialog.componentInstance.upload.emit({ type: 'transaction-receipt', files: [file] });
+  it('blocks download while a document is scanned', () => {
+    const element = render('CB-260987');
+    TestBed.inject(ChargebackStore).uploadDocuments('CB-260987', 'transaction-receipt', [
+      { name: 'receipt.pdf', sizeBytes: 1200 },
+    ]);
     fixture.detectChanges();
 
-    const row = documents?.querySelector('li[data-document]');
-    expect(element.querySelector('app-case-upload-dialog dialog')?.hasAttribute('open')).toBe(
-      false,
-    );
+    const row = element.querySelectorAll('li[data-document]')[1];
     expect(text(row?.querySelector('[data-status]'))).toBe('Scanning');
     expect(row?.querySelector<HTMLButtonElement>('[aria-label^="Download"]')?.disabled).toBe(true);
-    expect(text(documents?.querySelector('[aria-live]'))).toBe('Document successfully uploaded');
   });
 
-  it('deletes a draft document after confirming', () => {
-    const element = render('CB-260987');
-    const store = TestBed.inject(ChargebackStore);
-
-    click(element.querySelector('[aria-label="Delete receipt-57961.pdf"]'));
-    const dialog = element.querySelector('app-case-documents > app-dialog dialog');
-
-    expect(dialog?.hasAttribute('open')).toBe(true);
-    expect(text(dialog?.querySelector('h2'))).toBe('Delete document?');
-    expect(text(dialog?.querySelector('p'))).toBe(
-      'receipt-57961.pdf will be deleted from this case. This cannot be undone.',
-    );
-
-    click(dialog?.querySelector('button.bg-danger') ?? null);
-
-    expect(dialog?.hasAttribute('open')).toBe(false);
-    expect(store.getById('CB-260987')?.documents).toEqual([]);
-    expect(element.querySelectorAll('li[data-document]').length).toBe(0);
+  it('hides documents when the case has none', () => {
+    expect(render('CB-261018').querySelector('app-case-documents')).toBe(null);
   });
 
   it('lists the timeline newest first', () => {

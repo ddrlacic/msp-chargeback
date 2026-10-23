@@ -11,11 +11,16 @@
         <div
           class="flex flex-col gap-6 @4xl:col-start-2 @4xl:row-span-3 @4xl:row-start-2 @4xl:self-start"
         >
+          @if (deadline(); as deadline) {
+            <app-case-deadline [deadline]="deadline" />
+          }
           <app-case-money [chargeback]="chargeback" />
           <app-case-details [chargeback]="chargeback" />
         </div>
 
-        <app-case-documents class="@4xl:col-start-1" [chargeback]="chargeback" />
+        @if (chargeback.documents.length) {
+          <app-case-documents class="@4xl:col-start-1" [chargeback]="chargeback" />
+        }
 
         <section class="@4xl:col-start-1 @4xl:self-start" [attr.aria-labelledby]="timelineId">
           <h2 class="border-b border-line pb-3 text-h3" [id]="timelineId">
@@ -48,7 +53,7 @@
     <div class="flex flex-col items-center px-4 py-16 text-center">
       <p class="text-pretty text-ink-muted">{{ copy.NOT_FOUND_MESSAGE }}</p>
       <a
-        class="relative mt-6 inline-flex h-control items-center rounded-md bg-white px-3 font-semibold text-ink-strong shadow-control transition-[background-color,box-shadow,scale] duration-200 ease-in-out after:absolute after:inset-x-0 after:-inset-y-0.5 hover:bg-canvas hover:shadow-control-hover active:scale-[0.96] motion-reduce:active:scale-100 pointer-coarse:after:-inset-y-1"
+        class="relative mt-6 inline-flex h-control items-center rounded-md bg-white px-3 font-semibold text-ink-strong shadow-control transition-[background-color,box-shadow] duration-200 ease-in-out after:absolute after:inset-x-0 after:-inset-y-0.5 hover:bg-canvas hover:shadow-control-hover pointer-coarse:after:-inset-y-1"
         [routerLink]="chargebacksPath"
       >
         {{ copy.BACK_TO_LIST }}

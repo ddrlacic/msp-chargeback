@@ -4,13 +4,14 @@
   [attr.datetime]="date()"
 >
   <span class="text-body text-ink">{{ info().dateLabel }}</span>
-  <span class="flex items-center gap-1 text-small" [class]="toneClass()">
+  <span class="flex items-center gap-1" [class]="toneClass()">
     @switch (info().tone) {
       @case ('soon') {
         <lucide-icon
           name="clock"
-          class="size-3 shrink-0"
-          [size]="12"
+          class="shrink-0"
+          [class]="iconClass()"
+          [size]="iconSize()"
           [strokeWidth]="iconStroke()"
           [absoluteStrokeWidth]="true"
           aria-hidden="true"
@@ -19,14 +20,15 @@
       @case ('overdue') {
         <lucide-icon
           name="circle-alert"
-          class="size-3 shrink-0"
-          [size]="12"
+          class="shrink-0"
+          [class]="iconClass()"
+          [size]="iconSize()"
           [strokeWidth]="iconStroke()"
           [absoluteStrokeWidth]="true"
           aria-hidden="true"
         />
       }
     }
-    {{ info().remainingLabel }}
+    <span class="self-baseline">&#32;{{ info().remainingLabel }}</span>
   </span>
 </time>

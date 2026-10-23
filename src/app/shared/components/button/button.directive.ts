@@ -3,7 +3,7 @@ import { Directive, computed, input } from '@angular/core';
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'icon';
 
 const BASE =
-  'relative inline-flex shrink-0 items-center justify-center rounded-md whitespace-nowrap transition-[background-color,box-shadow,color,scale] duration-200 ease-in-out enabled:active:scale-[0.96] disabled:cursor-not-allowed motion-reduce:active:scale-100';
+  'relative inline-flex shrink-0 items-center justify-center rounded-md whitespace-nowrap transition-[background-color,box-shadow,color] duration-200 ease-in-out disabled:cursor-not-allowed';
 
 const CONTROL =
   'h-control gap-1 px-3 font-semibold after:absolute after:inset-x-0 after:-inset-y-0.5 pointer-coarse:after:-inset-y-1';

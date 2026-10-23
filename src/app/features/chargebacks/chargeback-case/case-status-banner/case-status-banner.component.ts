@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -39,7 +40,7 @@ let nextBannerId = 0;
 
 @Component({
   selector: 'app-case-status-banner',
-  imports: [ButtonDirective, LucideAngularModule],
+  imports: [ButtonDirective, LucideAngularModule, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './case-status-banner.component.html',
   host: {

@@ -230,7 +230,6 @@ export const CHARGEBACKS_CONSTANTS = {
     BACK_TO_LIST: 'Go to chargebacks',
     HEADER: {
       AMOUNT: 'Disputed amount',
-      DUE: 'Respond by',
       CARD: (network: string, lastFour: string) => `${network} •••• ${lastFour}`,
       CARD_LABEL: (network: string, lastFour: string) => `${network} ending in ${lastFour}`,
     },
@@ -262,6 +261,7 @@ export const CHARGEBACKS_CONSTANTS = {
       REASON: 'Reason',
       REASON_CODE: (code: string) => `Reason code ${code}`,
       CARD: 'Card',
+      CARD_NUMBER: (lastFour: string) => `•••• ${lastFour}`,
       TRANSACTION: 'Transaction',
       ORDER: 'Order',
       TRANSACTION_DATE: 'Transaction date',
@@ -269,6 +269,10 @@ export const CHARGEBACKS_CONSTANTS = {
       RECEIVED: 'Received',
       LOCATION: 'Location',
       LEGAL_ENTITY: 'Legal entity',
+    },
+    DEADLINE: {
+      RESPOND_BY: 'Respond by',
+      DECIDE_BY: 'Decide by',
     },
     MONEY: {
       TITLE: 'Amounts',
@@ -282,11 +286,7 @@ export const CHARGEBACKS_CONSTANTS = {
     },
     DOCUMENTS: {
       TITLE: 'Documents',
-      UPLOAD: 'Upload documents',
       LIST: 'Case documents',
-      EMPTY_TITLE: 'No documents',
-      EMPTY_MESSAGE:
-        'Upload receipts, delivery proof, or messages with the customer to support your response',
       UPLOADED: (date: string, by: string) => `Uploaded ${date} by ${by}`,
       SENT: (date: string) => `Sent to Worldpay ${date}`,
       SCANNING: 'Scanning',
@@ -294,16 +294,6 @@ export const CHARGEBACKS_CONSTANTS = {
       UPLOAD_FAILED: 'Upload failed',
       PREVIEW: (name: string) => `Preview ${name}`,
       DOWNLOAD: (name: string) => `Download ${name}`,
-      DELETE: (name: string) => `Delete ${name}`,
-      UPLOADED_ANNOUNCEMENT: (count: number) =>
-        count === 1 ? 'Document successfully uploaded' : `${count} documents successfully uploaded`,
-      DELETED_ANNOUNCEMENT: 'Document deleted',
-      DELETE_DIALOG: {
-        TITLE: 'Delete document?',
-        MESSAGE: (name: string) => `${name} will be deleted from this case. This cannot be undone.`,
-        CANCEL: 'Cancel',
-        CONFIRM: 'Delete document',
-      },
       UPLOAD_DIALOG: {
         TITLE: 'Upload documents',
         TYPE: 'Document type',

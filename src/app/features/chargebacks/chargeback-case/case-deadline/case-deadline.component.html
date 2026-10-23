@@ -1,0 +1,10 @@
+<section [attr.aria-labelledby]="titleId">
+  <h2 class="border-b border-line pb-3 text-h3" [id]="titleId">{{ deadline().title }}</h2>
+  <app-chargeback-due-date
+    class="py-2"
+    layout="inline"
+    remainingSize="body"
+    [date]="deadline().date"
+    [windowDays]="deadline().windowDays"
+  />
+</section>

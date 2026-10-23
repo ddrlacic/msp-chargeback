@@ -3,8 +3,8 @@
   <dl>
     @for (row of summary().rows; track row.key; let last = $last) {
       <div
-        class="flex items-baseline justify-between gap-4 py-2"
-        [class]="last ? 'font-semibold' : 'border-b border-line'"
+        class="flex items-baseline justify-between gap-4 pt-2"
+        [class]="last ? (summary().hint ? 'font-semibold' : 'pb-2 font-semibold') : 'border-b border-line pb-2'"
         [attr.data-row]="row.key"
       >
         <dt [class]="last ? 'text-ink' : 'text-ink-muted'">{{ row.label }}</dt>

@@ -7,6 +7,7 @@ import {
   ChargebackStatus,
 } from '../../../services/chargeback/chargeback.types';
 import {
+  getResponseWindowDays,
   getStatusState,
   isNeedsAction,
   roundMoney,
@@ -16,6 +17,7 @@ import { formatFileSize } from '../../../shared/utils/file.utils';
 import { formatMoney, formatSignedMoney } from '../../../shared/utils/money.utils';
 import {
   CARD_NETWORK_LABELS,
+  CARD_NETWORK_LOGOS,
   CHARGEBACK_ACTION_LABELS,
   CHARGEBACK_DOCUMENT_TYPE_LABELS,
   CHARGEBACK_STATUS_COPY,
@@ -66,6 +68,12 @@ export interface CaseHeader {
   readonly location: string;
 }
 
+export interface CaseDeadline {
+  readonly title: string;
+  readonly date: string;
+  readonly windowDays?: number;
+}
+
 export interface MoneyRow {
   readonly key: 'disputed' | 'challenged' | 'debited' | 'credited' | 'net';
   readonly label: string;
@@ -83,6 +91,7 @@ export interface DetailRow {
   readonly value: string;
   readonly secondary?: string;
   readonly valueLabel?: string;
+  readonly logo?: string;
 }
 
 export type DocumentStatusTone = 'scanning' | 'error';
@@ -95,7 +104,6 @@ export interface DocumentRow {
   readonly status?: { readonly label: string; readonly tone: DocumentStatusTone };
   readonly sent: boolean;
   readonly canOpen: boolean;
-  readonly canDelete: boolean;
 }
 
 export interface TimelineRow {
@@ -143,6 +151,20 @@ export function getCaseBanner(chargeback: ChargebackCase): CaseBanner {
           description: getOptionDescription(chargeback, action.action),
         }))
       : [],
+  };
+}
+
+export function getCaseDeadline(chargeback: ChargebackCase): CaseDeadline | undefined {
+  if (!chargeback.replyByDate || !isNeedsAction(chargeback.status)) {
+    return undefined;
+  }
+  return {
+    title:
+      chargeback.status === 'decision-needed'
+        ? copy.DEADLINE.DECIDE_BY
+        : copy.DEADLINE.RESPOND_BY,
+    date: chargeback.replyByDate,
+    windowDays: getResponseWindowDays(chargeback),
   };
 }
 
@@ -196,7 +218,13 @@ export function getCaseDetails(chargeback: ChargebackCase): readonly DetailRow[]
       value: chargeback.reasonDescription,
       secondary: labels.REASON_CODE(chargeback.reasonCode),
     },
-    { key: 'card', label: labels.CARD, value: header.card, valueLabel: header.cardLabel },
+    {
+      key: 'card',
+      label: labels.CARD,
+      value: labels.CARD_NUMBER(chargeback.cardLastFour),
+      valueLabel: header.cardLabel,
+      logo: CARD_NETWORK_LOGOS[chargeback.network],
+    },
     { key: 'transaction', label: labels.TRANSACTION, value: chargeback.transactionId },
     { key: 'order', label: labels.ORDER, value: chargeback.orderReference },
     {
@@ -220,13 +248,8 @@ export function getCaseDetails(chargeback: ChargebackCase): readonly DetailRow[]
   ];
 }
 
-export function canUploadDocuments(chargeback: ChargebackCase): boolean {
-  return isNeedsAction(chargeback.status);
-}
-
 export function getDocumentRows(chargeback: ChargebackCase): readonly DocumentRow[] {
   const sentAt = getSentDates(chargeback);
-  const editable = canUploadDocuments(chargeback);
   return chargeback.documents.map((document) => {
     const sent = sentAt.get(document.id);
     return {
@@ -239,7 +262,6 @@ export function getDocumentRows(chargeback: ChargebackCase): readonly DocumentRo
       status: getDocumentStatus(document),
       sent: sent !== undefined,
       canOpen: document.securityStatus === 'clean',
-      canDelete: editable && sent === undefined && document.securityStatus !== 'scanning',
     };
   });
 }
