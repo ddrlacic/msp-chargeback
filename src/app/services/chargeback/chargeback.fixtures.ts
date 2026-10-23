@@ -28,7 +28,7 @@ export const FIXTURE_LOCATIONS = {
 
 type FixtureLocation = keyof typeof FIXTURE_LOCATIONS;
 
-type TimelineSeed = Omit<TimelineEvent, 'id'>;
+export type TimelineSeed = Omit<TimelineEvent, 'id'>;
 
 interface CaseSeed {
   readonly caseId: string;
@@ -64,7 +64,7 @@ const REASONS = {
   notAuthorized: 'Cardholder says they did not authorize this payment',
 } as const;
 
-const ISSUER_NOTES = {
+export const ISSUER_NOTES = {
   coldAndMissing:
     'The cardholder says the food arrived cold and two items were missing. The invoice shows what was ordered, not what was delivered.',
   notAsPictured:
@@ -75,20 +75,32 @@ const ISSUER_NOTES = {
     'The tracking shows the order was delivered to a different address from the one on the order.',
 } as const;
 
-export function createChargebackFixtures(today: Date): ChargebackCase[] {
-  const day = (offset: number) => toIsoDate(addDays(today, offset));
-  const at = (offset: number, hours: number, minutes = 0) =>
-    atTime(addDays(today, offset), hours, minutes);
+export const WORLDPAY_RETURN_NOTE =
+  'The delivery photo is hard to read. Upload a clearer copy that shows the delivery address and time.';
 
-  const received = (offset: number, amount: number, network: CardNetwork): TimelineSeed => ({
-    occurredAt: at(offset, 9, 12),
+export function createReceivedEvent(
+  occurredAt: string,
+  amount: number,
+  network: CardNetwork,
+): TimelineSeed {
+  return {
+    occurredAt,
     cycle: 'first-chargeback',
     actor: 'cardholder-bank',
     title: 'Chargeback received',
     worldpayTerm: network === 'visa' ? 'Dispute' : 'First chargeback',
     description: 'The cardholder’s bank disputed this payment',
     amountChange: -amount,
-  });
+  };
+}
+
+export function createChargebackFixtures(today: Date): ChargebackCase[] {
+  const day = (offset: number) => toIsoDate(addDays(today, offset));
+  const at = (offset: number, hours: number, minutes = 0) =>
+    atTime(addDays(today, offset), hours, minutes);
+
+  const received = (offset: number, amount: number, network: CardNetwork): TimelineSeed =>
+    createReceivedEvent(at(offset, 9, 12), amount, network);
 
   const responseSent = (
     offset: number,
@@ -273,8 +285,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       documents: [
         doc('CB-260954', 1, 'delivery-photo.jpg', 'delivery-proof', 1_204_224, at(-9, 14, 30)),
       ],
-      worldpayNote:
-        'The delivery photo is hard to read. Upload a clearer copy that shows the delivery address and time.',
+      worldpayNote: WORLDPAY_RETURN_NOTE,
       timeline: [
         received(-16, 64.9, 'visa'),
         responseSent(-9, undefined, ['CB-260954-doc-1']),
@@ -284,8 +295,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
           actor: 'worldpay',
           title: 'Worldpay returned your response',
           worldpayTerm: 'Request declined',
-          description:
-            'The delivery photo is hard to read. Upload a clearer copy that shows the delivery address and time.',
+          description: WORLDPAY_RETURN_NOTE,
         },
       ],
     },

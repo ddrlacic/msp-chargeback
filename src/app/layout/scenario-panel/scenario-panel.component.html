@@ -1,0 +1,133 @@
+<div
+  [id]="panelId"
+  popover="manual"
+  role="region"
+  [attr.aria-label]="copy.TITLE"
+  class="inset-auto top-16 right-4 m-0 max-h-[calc(100dvh-5rem)] w-[min(340px,calc(100vw-16px))] origin-top-right overflow-y-auto overscroll-contain rounded-md border-0 bg-white p-0 shadow-menu max-sm:right-2"
+>
+  <div class="flex flex-col gap-4 p-4">
+    <div class="flex items-start justify-between gap-2">
+      <div class="min-w-0">
+        <h2 class="text-h3">{{ copy.TITLE }}</h2>
+        <p class="mt-0.5 text-pretty text-small text-ink-muted">{{ copy.DESCRIPTION }}</p>
+      </div>
+      <button
+        type="button"
+        appButton="icon"
+        size="small"
+        class="shrink-0"
+        [attr.popovertarget]="panelId"
+        popovertargetaction="hide"
+        [attr.aria-label]="copy.CLOSE"
+      >
+        <lucide-icon
+          name="x"
+          class="block"
+          [size]="16"
+          [strokeWidth]="1.5"
+          [absoluteStrokeWidth]="true"
+          aria-hidden="true"
+        />
+      </button>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="font-semibold text-ink" [for]="caseSelectId">{{ copy.CASE }}</label>
+      <div class="relative">
+        <select
+          #caseSelect
+          class="h-control w-full appearance-none rounded-md bg-white pr-8 pl-3 text-ink shadow-field transition-[box-shadow] duration-200 ease-in-out hover:shadow-field-hover"
+          [id]="caseSelectId"
+          (change)="selectCase(caseSelect.value)"
+        >
+          <option value="" disabled [selected]="caseId() === undefined">
+            {{ copy.CASE_PLACEHOLDER }}
+          </option>
+          @for (option of caseOptions(); track option.id) {
+            <option [value]="option.id" [selected]="option.id === caseId()">
+              {{ option.label }}
+            </option>
+          }
+        </select>
+        <lucide-icon
+          name="chevron-down"
+          class="pointer-events-none absolute top-1/2 right-2.5 block -translate-y-1/2 text-ink-subtle"
+          [size]="16"
+          [strokeWidth]="1.5"
+          [absoluteStrokeWidth]="true"
+          aria-hidden="true"
+        />
+      </div>
+    </div>
+
+    @if (chargeback(); as current) {
+      <div class="flex flex-col gap-1">
+        <label class="font-semibold text-ink" [for]="statusSelectId">{{ copy.STATUS }}</label>
+        <div class="relative">
+          <select
+            #statusSelect
+            class="h-control w-full appearance-none rounded-md bg-white pr-8 pl-3 text-ink shadow-field transition-[box-shadow] duration-200 ease-in-out hover:shadow-field-hover"
+            [id]="statusSelectId"
+            (change)="selectStatus(statusSelect.value)"
+          >
+            @for (option of statusOptions; track option.value) {
+              <option [value]="option.value" [selected]="option.value === current.status">
+                {{ option.label }}
+              </option>
+            }
+          </select>
+          <lucide-icon
+            name="chevron-down"
+            class="pointer-events-none absolute top-1/2 right-2.5 block -translate-y-1/2 text-ink-subtle"
+            [size]="16"
+            [strokeWidth]="1.5"
+            [absoluteStrokeWidth]="true"
+            aria-hidden="true"
+          />
+        </div>
+        <p class="text-pretty text-small text-ink-muted">{{ copy.STATUS_HINT }}</p>
+      </div>
+
+      <section class="flex flex-col gap-2" [attr.aria-labelledby]="caseSelectId + '-events'">
+        <h3 class="text-body" [id]="caseSelectId + '-events'">{{ copy.EVENTS }}</h3>
+        @if (events().length) {
+          <ul class="flex flex-col gap-2">
+            @for (item of events(); track item.event) {
+              <li>
+                <button
+                  type="button"
+                  class="flex min-h-control w-full flex-col items-start rounded-md bg-white px-3 py-1.5 text-left shadow-control transition-[background-color,box-shadow] duration-200 ease-in-out hover:bg-canvas hover:shadow-control-hover"
+                  (click)="simulate(item.event)"
+                >
+                  <span class="font-semibold text-ink-strong">{{ item.label }}</span>
+                  <span class="text-small text-ink-muted">{{ item.result }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="text-pretty text-ink-muted">{{ copy.NO_EVENTS }}</p>
+        }
+      </section>
+    } @else {
+      <p class="text-pretty text-ink-muted">{{ copy.NO_CASE }}</p>
+    }
+
+    <div class="flex flex-col gap-1.5 border-t border-divider pt-4">
+      <button type="button" appButton="secondary" class="w-full" (click)="reset()">
+        <lucide-icon
+          name="rotate-ccw"
+          class="block"
+          [size]="16"
+          [strokeWidth]="1.5"
+          [absoluteStrokeWidth]="true"
+          aria-hidden="true"
+        />
+        {{ copy.RESET }}
+      </button>
+      <p class="text-pretty text-small text-ink-muted">{{ copy.RESET_HINT }}</p>
+    </div>
+  </div>
+</div>
+
+<p class="sr-only" role="status">{{ announcement() }}</p>

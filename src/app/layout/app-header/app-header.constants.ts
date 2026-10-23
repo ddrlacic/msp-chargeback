@@ -1,10 +1,12 @@
 import { FIXTURE_BRAND } from '../../services/chargeback/chargeback.fixtures';
+import { SCENARIO_PANEL_COPY } from '../scenario-panel/scenario-panel.constants';
 
 export const HEADER_COPY = {
   LOGO_ALT: 'PAR',
   PRODUCT_NAME: 'Payment Services',
   OPEN_MENU: 'Open menu',
   CLOSE_MENU: 'Close menu',
+  SCENARIOS: SCENARIO_PANEL_COPY.TITLE,
   NOTIFICATIONS: 'Notifications',
   NO_NOTIFICATIONS: 'No new notifications',
   USER_MENU: 'Your account',

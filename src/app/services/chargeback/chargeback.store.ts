@@ -1,6 +1,19 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { CLOCK } from '../../shared/clock';
+import {
+  createScenarioBase,
+  createScenarioDocuments,
+  getScenarioTransition,
+  isRulingEvent,
+  RulingScenarioEvent,
+  ScenarioDocumentType,
+  ScenarioEvent,
+  ScenarioStep,
+  SCENARIO_SCRIPTS,
+  spreadScenarioTimeline,
+  TransitionScenarioEvent,
+} from './chargeback-scenario.utils';
 import { createChargebackFixtures, FIXTURE_BRAND } from './chargeback.fixtures';
 import {
   ArbitrationRuling,
@@ -35,6 +48,12 @@ export interface DocumentUploadInput {
 }
 
 export const DOCUMENT_SCAN_MS = 2500;
+
+const RULINGS: Record<RulingScenarioEvent, ArbitrationRuling> = {
+  'arbitration-won': 'won',
+  'arbitration-split': 'partially-won',
+  'arbitration-lost': 'lost',
+};
 
 type TimelineEventInput = Omit<TimelineEvent, 'id' | 'occurredAt' | 'cycle'>;
 
@@ -205,8 +224,89 @@ export class ChargebackStore {
     this.updateCase(caseId, (chargeback) => this.withStatus(chargeback, status));
   }
 
+  simulateEvent(caseId: string, event: ScenarioEvent): void {
+    if (isRulingEvent(event)) {
+      this.recordArbitrationRuling(caseId, RULINGS[event]);
+      return;
+    }
+    this.applyTransition(caseId, event);
+  }
+
+  jumpToStatus(caseId: string, status: ChargebackStatus): void {
+    if (!this.getById(caseId)) {
+      return;
+    }
+    const now = this.clock.now();
+    this.updateCase(caseId, (chargeback) => createScenarioBase(chargeback, now));
+    SCENARIO_SCRIPTS[status].forEach((step) => this.runScenarioStep(caseId, step));
+    this.updateCase(caseId, (chargeback) => spreadScenarioTimeline(chargeback, now));
+  }
+
   reset(): void {
     this.state.set(this.createInitialCases());
+  }
+
+  private applyTransition(caseId: string, event: TransitionScenarioEvent): void {
+    this.updateCase(caseId, (chargeback) => {
+      const transition = getScenarioTransition(chargeback, event, this.clock.now());
+      return this.withEvent(
+        this.withStatus({ ...chargeback, ...transition.changes }, transition.status),
+        transition.event,
+      );
+    });
+  }
+
+  private runScenarioStep(caseId: string, step: ScenarioStep): void {
+    const chargeback = this.getById(caseId);
+    if (!chargeback) {
+      return;
+    }
+    switch (step) {
+      case 'accept':
+        this.acceptChargeback(caseId);
+        break;
+      case 'request-arbitration':
+        this.requestArbitration(caseId);
+        break;
+      case 'save-draft':
+        this.saveDraft(caseId, {
+          reason: 'proof-of-purchase',
+          documentIds: this.addScenarioDocuments(caseId, ['transaction-receipt']),
+        });
+        break;
+      case 'submit-response':
+        this.submitResponse(caseId, {
+          reason: 'proof-of-purchase',
+          challengedAmount: chargeback.chargebackAmount,
+          documentIds: this.addScenarioDocuments(caseId, ['transaction-receipt', 'invoice']),
+        });
+        break;
+      case 'submit-pre-arbitration-response':
+        this.submitResponse(caseId, {
+          reason: chargeback.challengeReason ?? 'proof-of-purchase',
+          challengedAmount: chargeback.challengedAmount ?? chargeback.chargebackAmount,
+          documentIds: this.addScenarioDocuments(caseId, ['delivery-proof']),
+        });
+        break;
+      default:
+        this.simulateEvent(caseId, step);
+    }
+  }
+
+  private addScenarioDocuments(
+    caseId: string,
+    types: readonly ScenarioDocumentType[],
+  ): readonly string[] {
+    const chargeback = this.getById(caseId);
+    if (!chargeback) {
+      return [];
+    }
+    const documents = createScenarioDocuments(chargeback, types, this.clock.now());
+    this.updateCase(caseId, (current) => ({
+      ...current,
+      documents: [...current.documents, ...documents],
+    }));
+    return documents.map((document) => document.id);
   }
 
   private createInitialCases(): readonly ChargebackCase[] {

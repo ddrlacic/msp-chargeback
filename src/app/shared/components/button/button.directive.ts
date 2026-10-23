@@ -1,6 +1,6 @@
 import { Directive, computed, input } from '@angular/core';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'icon';
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'invisible-simple' | 'icon';
 export type ButtonSize = 'default' | 'small';
 
 const BASE =
@@ -19,6 +19,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
   secondary:
     'bg-white text-ink-strong shadow-control enabled:hover:bg-canvas enabled:hover:shadow-control-hover disabled:text-ink-placeholder disabled:shadow-field',
   destructive: 'bg-danger text-white shadow-button-primary enabled:hover:bg-danger-hover',
+  'invisible-simple':
+    'font-normal! text-ink-strong enabled:hover:bg-hover enabled:active:bg-pressed disabled:text-ink-placeholder',
   icon: 'text-ink-subtle enabled:hover:bg-hover enabled:hover:text-ink enabled:active:bg-pressed disabled:text-ink-placeholder',
 };
 
