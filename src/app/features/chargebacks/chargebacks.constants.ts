@@ -1,10 +1,13 @@
 import {
   CardNetwork,
+  ChallengeReason,
   ChargebackAction,
   ChargebackColorState,
+  ChargebackDocumentSecurityStatus,
   ChargebackDocumentType,
   ChargebackStatus,
 } from '../../services/chargeback/chargeback.types';
+import { formatFileSize } from '../../shared/utils/file.utils';
 import { ColumnKey, ListTab, ReceivedPreset } from './chargebacks.types';
 
 export interface ChargebackStatusCopy {
@@ -131,6 +134,51 @@ export const CHARGEBACK_DOCUMENT_TYPE_LABELS: Record<ChargebackDocumentType, str
   'terms-and-conditions': 'Terms and conditions',
   other: 'Other',
 };
+
+export const CHARGEBACK_DOCUMENT_TYPE_HINTS: Record<ChargebackDocumentType, string> = {
+  'transaction-receipt': 'Shows the amount, date, and items',
+  invoice: 'Itemized order with the total',
+  'delivery-proof': 'Photo, signature, or tracking that shows the order arrived',
+  'customer-communication': 'Emails or messages with the cardholder',
+  'refund-proof': 'Receipt or confirmation that shows the refund',
+  'authorization-proof': 'Signed slip or approval record for the payment',
+  'terms-and-conditions': 'Your refund or cancellation policy the cardholder agreed to',
+  other: 'Anything else that supports your response',
+};
+
+export const CHARGEBACK_DOCUMENT_STATUS_LABELS: Partial<
+  Record<ChargebackDocumentSecurityStatus, string>
+> = {
+  scanning: 'Scanning',
+  rejected: 'Blocked by the security scan',
+  'upload-failed': 'Upload failed',
+};
+
+export interface ChallengeReasonCopy {
+  readonly label: string;
+  readonly description: string;
+}
+
+export const CHALLENGE_REASON_COPY: Record<ChallengeReason, ChallengeReasonCopy> = {
+  'credit-issued': {
+    label: 'Credit already issued',
+    description: 'You refunded the cardholder before they disputed the payment',
+  },
+  'cardholder-withdrew': {
+    label: 'Cardholder no longer disputes',
+    description: 'The cardholder agreed the payment is valid',
+  },
+  'invalid-dispute': {
+    label: 'Invalid dispute',
+    description: 'The dispute was filed too late, twice, or with wrong details',
+  },
+  'proof-of-purchase': {
+    label: 'Proof of purchase or delivery',
+    description: 'The cardholder paid for the order and received it',
+  },
+};
+
+export const RESPOND_PATH = 'respond';
 
 export const RECEIVED_PRESET_LABELS: Record<ReceivedPreset, string> = {
   any: 'Any date',
@@ -291,14 +339,20 @@ export const CHARGEBACKS_CONSTANTS = {
         TYPE_PLACEHOLDER: 'Select document type',
         DROP: 'Drag and drop to upload files or',
         CHOOSE: 'choose from files',
-        HINT: 'PDF, JPG, or PNG. Up to 5 files, 30 MB in total.',
+        HINT: (fileLimit: string) =>
+          `PDF, JPG, PNG, GIF, or TIF. Up to ${fileLimit} per file and 10 MB per case.`,
         FILES: 'Files to upload',
         REMOVE: (name: string) => `Remove ${name}`,
         CANCEL: 'Cancel',
         SUBMIT: (count: number) => (count === 1 ? 'Upload document' : 'Upload documents'),
-        WRONG_TYPE: (name: string) => `Couldn’t add ${name}. Use a PDF, JPG, or PNG file.`,
-        TOO_MANY: 'You can upload up to 5 files at a time',
-        TOO_LARGE: (name: string) => `Couldn’t add ${name}. Files can be up to 30 MB in total.`,
+        WRONG_TYPE: (name: string) => `Couldn’t add ${name}. Use a PDF, JPG, PNG, GIF, or TIF file.`,
+        TOO_MANY: 'A case can have up to 50 documents',
+        TOO_LARGE: (name: string, limit: number) =>
+          `Couldn’t add ${name}. Each file can be up to ${formatFileSize(limit)}.`,
+        CASE_TOO_LARGE: (name: string) =>
+          `Couldn’t add ${name}. A case can have up to 10 MB of documents.`,
+        DUPLICATE: (name: string) =>
+          `Couldn’t add ${name}. This case already has a document with that name.`,
       },
       SAMPLE: {
         TITLE: 'Sample document',
@@ -332,6 +386,92 @@ export const CHARGEBACKS_CONSTANTS = {
       },
       DOCUMENTS: 'Documents sent',
       PREVIEW: (name: string) => `Preview ${name}`,
+    },
+  },
+  ACCEPT_DIALOG: {
+    TITLE: 'Accept chargeback',
+    DESCRIPTION: (amount: string) =>
+      `${amount} stays charged and the case closes. You cannot undo this.`,
+    CANCEL: 'Cancel',
+    CONFIRM: 'Accept chargeback',
+  },
+  RESPOND: {
+    TITLE: { challenge: 'Challenge chargeback', resubmit: 'Fix and resubmit' },
+    STEPS_LABEL: 'Progress',
+    STEP_OF: (step: number, total: number) => `Step ${step} of ${total}`,
+    STEP_DONE: 'Completed',
+    STEPS: {
+      review: 'Review',
+      reason: 'Reason and amount',
+      evidence: 'Evidence',
+      submit: 'Review and submit',
+    },
+    ACTIONS: {
+      BACK: 'Back',
+      CONTINUE: 'Continue',
+      SAVE_AND_EXIT: 'Save and exit',
+      CANCEL: 'Cancel',
+      SUBMIT: 'Submit response',
+    },
+    NOTE: {
+      TITLE: 'Note from Worldpay',
+      DEADLINE: (date: string) => `Resubmit by ${date}, or the chargeback stands`,
+    },
+    REVIEW: {
+      DESCRIPTION: 'Check the dispute before you respond',
+      DEADLINE: (date: string) => `Respond by ${date}, or the chargeback stands`,
+      AMOUNT: 'Disputed amount',
+      CLAIM: 'Cardholder’s claim',
+      DISPUTE_REASON: 'Dispute reason',
+      DISPUTE_REASON_VALUE: (network: string, code: string) => `${network} reason code ${code}`,
+      TRANSACTION: 'Transaction',
+      TRANSACTION_DATE: 'Transaction date',
+      ORDER: 'Order',
+      CARD: 'Card',
+    },
+    REASON: {
+      LEGEND: 'Challenge reason',
+      DESCRIPTION: 'Choose the reason that fits best. It decides which documents to add.',
+      ERROR: 'Choose a reason',
+      AMOUNT_LEGEND: 'Amount to challenge',
+      AMOUNT_FULL: (amount: string) => `Full amount (${amount})`,
+      AMOUNT_PARTIAL: 'Smaller amount',
+      AMOUNT_LABEL: 'Amount',
+      AMOUNT_HINT: (max: string) => `Up to ${max}`,
+      AMOUNT_ERROR: (min: string, max: string) => `Enter an amount from ${min} to ${max}`,
+    },
+    EVIDENCE: {
+      DESCRIPTION:
+        'Add documents that support your reason. Worldpay passes them on to the cardholder’s bank.',
+      CHECKLIST: 'Documents to add',
+      OTHER: 'Other documents',
+      UPLOAD: 'Upload',
+      UPLOAD_LABEL: (type: string) => `Upload ${type.toLowerCase()}`,
+      FILES: (type: string) => `${type} files`,
+      REMOVE: (name: string) => `Remove ${name}`,
+      PREVIEW: (name: string) => `Preview ${name}`,
+      ADDED: 'Added',
+      NOTE_LABEL: 'Note (optional)',
+      NOTE_HINT: 'Tell Worldpay anything the documents do not show',
+      NO_DOCUMENTS: 'Add at least one document',
+      BLOCKED: 'Remove documents that did not upload',
+    },
+    SUBMIT: {
+      DESCRIPTION: 'Check what you are sending. Nothing goes to Worldpay until you submit.',
+      REASON: 'Reason',
+      AMOUNT: 'Amount',
+      DOCUMENTS: 'Documents',
+      NOTE: 'Note',
+      EDIT: 'Edit',
+      EDIT_LABEL: (section: string) => `Edit ${section.toLowerCase()}`,
+      AMOUNT_PARTIAL: (amount: string, full: string) => `${amount} of ${full}`,
+      NEXT_TITLE: 'What happens next',
+      NEXT_CREDIT: (amount: string) =>
+        `Worldpay reviews your response and passes it on to the cardholder’s bank. ${amount} is credited back to your account while they decide.`,
+      NEXT_NO_CREDIT:
+        'Worldpay reviews your response and passes it on to the cardholder’s bank. No money moves until they decide.',
+      SCANNING: 'Scanning documents. You can submit when it finishes',
+      BLOCKED: 'Remove documents that did not upload to submit',
     },
   },
   DUE_DATE: {

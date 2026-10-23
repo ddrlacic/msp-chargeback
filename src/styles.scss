@@ -162,6 +162,7 @@
   --shadow-control: var(--shadow-field), 0 1px 0 rgb(0 0 0 / 0.06);
   --shadow-control-hover: var(--shadow-field-hover), 0 1px 0 rgb(0 0 0 / 0.06);
   --shadow-control-selected: inset 0 0 0 1.5px var(--color-accent-80), 0 1px 0 rgb(0 0 0 / 0.06);
+  --shadow-card-selected: inset 0 0 0 2px var(--color-accent-80), 0 1px 0 rgb(0 0 0 / 0.06);
   --shadow-focus: 0 0 0 2px rgb(90 85 227 / 0.7);
   --shadow-sidebar-focus: inset 0 0 0 1.5px var(--color-accent-60);
 
@@ -174,6 +175,14 @@
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-icon: cubic-bezier(0.2, 0, 0, 1);
+
+  --animate-loader: loader-spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+
+  @keyframes loader-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 }
 
 @layer base {

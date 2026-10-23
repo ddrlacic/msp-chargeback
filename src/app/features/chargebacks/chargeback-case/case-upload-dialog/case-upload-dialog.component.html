@@ -55,20 +55,20 @@
           {{ copy.CHOOSE }}
         </button>
       </p>
-      <p class="mt-1 text-small text-ink-muted">{{ copy.HINT }}</p>
+      <p class="mt-1 text-small text-ink-muted">{{ hint() }}</p>
       <input #picker type="file" multiple hidden [accept]="accept" (change)="onPick($event)" />
     </div>
 
     @if (errors().length) {
       <ul class="flex flex-col gap-1" role="alert">
         @for (error of errors(); track error) {
-          <li class="flex items-start gap-1.5 text-small text-lost-text">
-            <span class="mt-0.5 shrink-0" aria-hidden="true">
+          <li class="flex items-start gap-1 text-small text-lost-text">
+            <span class="flex h-lh shrink-0 items-center" aria-hidden="true">
               <lucide-icon
                 name="circle-alert"
                 class="block size-3"
                 [size]="12"
-                [strokeWidth]="1.5"
+                [strokeWidth]="1"
                 [absoluteStrokeWidth]="true"
               />
             </span>

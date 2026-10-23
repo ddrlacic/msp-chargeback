@@ -6,7 +6,11 @@
       >
         <app-case-header class="@4xl:col-span-2" [chargeback]="chargeback" />
 
-        <app-case-status-banner class="@4xl:col-start-1" [chargeback]="chargeback" />
+        <app-case-status-banner
+          class="@4xl:col-start-1"
+          [chargeback]="chargeback"
+          (action)="onAction($event)"
+        />
 
         <div
           class="flex flex-col gap-6 @4xl:col-start-2 @4xl:row-span-2 @4xl:row-start-2 @4xl:self-start"
@@ -18,9 +22,19 @@
           <app-case-details [chargeback]="chargeback" />
         </div>
 
-        <app-case-timeline class="@4xl:col-start-1 @4xl:self-start" [chargeback]="chargeback" />
+        <app-case-timeline
+          class="@4xl:col-start-1 @4xl:self-start"
+          [chargeback]="chargeback"
+          (action)="onAction($event)"
+        />
       </div>
     </div>
+    <app-case-accept-dialog
+      [open]="acceptOpen()"
+      [amount]="acceptAmount()"
+      (closed)="acceptOpen.set(false)"
+      (confirmed)="acceptChargeback()"
+    />
   } @else {
     <div class="flex flex-col items-center px-4 py-16 text-center">
       <p class="text-pretty text-ink-muted">{{ copy.NOT_FOUND_MESSAGE }}</p>

@@ -72,9 +72,18 @@ export interface TimelineEvent {
   readonly documentIds?: readonly string[];
 }
 
+export const CHALLENGE_REASONS = [
+  'credit-issued',
+  'cardholder-withdrew',
+  'invalid-dispute',
+  'proof-of-purchase',
+] as const;
+
+export type ChallengeReason = (typeof CHALLENGE_REASONS)[number];
+
 export interface ChallengeDraft {
   readonly savedAt: string;
-  readonly reason?: string;
+  readonly reason?: ChallengeReason;
   readonly challengedAmount?: number;
   readonly documentIds: readonly string[];
   readonly note?: string;
@@ -103,6 +112,8 @@ export interface ChargebackCase {
   readonly currency: string;
   readonly replyByDate?: string;
   readonly challengedAmount?: number;
+  readonly challengeReason?: ChallengeReason;
+  readonly challengeNote?: string;
   readonly amountDebited: number;
   readonly amountCredited: number;
   readonly documents: readonly ChargebackDocument[];

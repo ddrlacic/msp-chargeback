@@ -1,0 +1,85 @@
+<section class="flex flex-col gap-3">
+  <div>
+    <p class="font-semibold text-ink" [id]="reasonLabelId">{{ copy.LEGEND }}</p>
+    <p class="text-pretty text-ink-muted">{{ copy.DESCRIPTION }}</p>
+  </div>
+  <div class="flex flex-col gap-2">
+    <app-radio-group
+      [options]="reasonOptions"
+      [value]="flow.reason()"
+      [labelledBy]="reasonLabelId"
+      [describedBy]="showReasonError() ? reasonErrorId : undefined"
+      [invalid]="showReasonError()"
+      (valueChange)="onReason($event)"
+    />
+    @if (showReasonError()) {
+      <p class="flex items-start gap-1 text-small text-lost-text" role="alert" [id]="reasonErrorId">
+        <span class="flex h-lh shrink-0 items-center" aria-hidden="true">
+          <lucide-icon
+            name="circle-alert"
+            class="block size-3"
+            [size]="12"
+            [strokeWidth]="1"
+            [absoluteStrokeWidth]="true"
+          />
+        </span>
+        {{ copy.ERROR }}
+      </p>
+    }
+  </div>
+</section>
+
+<section class="flex flex-col gap-3">
+  <p class="font-semibold text-ink" [id]="amountLabelId">{{ copy.AMOUNT_LEGEND }}</p>
+  <app-radio-group
+    [options]="amountOptions()"
+    [value]="flow.amountChoice()"
+    [labelledBy]="amountLabelId"
+    (valueChange)="onAmountChoice($event)"
+  />
+  @if (flow.amountChoice() === 'partial') {
+    <div class="flex flex-col gap-1">
+      <label class="font-semibold text-ink" [for]="amountId">{{ copy.AMOUNT_LABEL }}</label>
+      <div class="relative flex items-center sm:w-56">
+        <span class="pointer-events-none absolute left-3 text-ink-subtle" aria-hidden="true"
+          >$</span
+        >
+        <input
+          #amountInput
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          class="h-control w-full min-w-0 appearance-none rounded-md bg-white pr-3 pl-7 text-ink shadow-field transition-[box-shadow] duration-200 ease-in-out hover:shadow-field-hover aria-invalid:shadow-[inset_0_0_0_1.5px_var(--color-error-120)]"
+          [id]="amountId"
+          [value]="flow.amountText()"
+          [attr.aria-invalid]="showAmountError() ? true : null"
+          [attr.aria-describedby]="showAmountError() ? amountErrorId : amountHintId"
+          (input)="onAmountInput($event)"
+          (blur)="onAmountBlur()"
+        />
+      </div>
+      @if (showAmountError()) {
+        <p
+          class="mt-1 flex items-start gap-1 text-small text-lost-text tabular-nums"
+          role="alert"
+          [id]="amountErrorId"
+        >
+          <span class="flex h-lh shrink-0 items-center" aria-hidden="true">
+            <lucide-icon
+              name="circle-alert"
+              class="block size-3"
+              [size]="12"
+              [strokeWidth]="1"
+              [absoluteStrokeWidth]="true"
+            />
+          </span>
+          {{ amountError() }}
+        </p>
+      } @else {
+        <p class="text-small text-ink-muted tabular-nums" [id]="amountHintId">
+          {{ copy.AMOUNT_HINT(maxAmount()) }}
+        </p>
+      }
+    </div>
+  }
+</section>

@@ -43,7 +43,12 @@ describe('ChargebackStore', () => {
   });
 
   it('credits the challenged amount when a non-Visa response is submitted', () => {
-    store.submitResponse('CB-261022', { challengedAmount: 100, documentIds: ['doc-1'] });
+    store.submitResponse('CB-261022', {
+      reason: 'invalid-dispute',
+      challengedAmount: 100,
+      documentIds: ['doc-1'],
+      note: 'The cardholder filed this twice',
+    });
     const chargeback = store.getById('CB-261022');
 
     expect(chargeback?.status).toBe('response-submitted');
@@ -52,8 +57,57 @@ describe('ChargebackStore', () => {
     expect(chargeback?.timeline.at(-1)?.amountChange).toBe(100);
   });
 
+  it('keeps the reason and note with the submitted response', () => {
+    store.submitResponse('CB-261022', {
+      reason: 'invalid-dispute',
+      challengedAmount: 100,
+      documentIds: ['doc-1'],
+      note: 'The cardholder filed this twice',
+    });
+    const chargeback = store.getById('CB-261022');
+
+    expect(chargeback?.challengeReason).toBe('invalid-dispute');
+    expect(chargeback?.challengeNote).toBe('The cardholder filed this twice');
+    expect(chargeback?.timeline.at(-1)?.description).toBe('The cardholder filed this twice');
+    expect(chargeback?.timeline.at(-1)?.documentIds).toEqual(['doc-1']);
+  });
+
+  it('records a resubmitted response and clears Worldpay’s note', () => {
+    store.submitResponse('CB-260954', {
+      reason: 'proof-of-purchase',
+      challengedAmount: 64.9,
+      documentIds: ['CB-260954-doc-1'],
+    });
+    const chargeback = store.getById('CB-260954');
+
+    expect(chargeback?.status).toBe('response-submitted');
+    expect(chargeback?.worldpayNote).toBe(undefined);
+    expect(chargeback?.timeline.at(-1)?.title).toBe('Updated response sent to Worldpay');
+  });
+
+  it('does not credit a non-Visa resubmission twice', () => {
+    store.submitResponse('CB-261022', {
+      reason: 'invalid-dispute',
+      challengedAmount: 100,
+      documentIds: [],
+    });
+    store.setStatus('CB-261022', 'returned-by-worldpay');
+    store.submitResponse('CB-261022', {
+      reason: 'invalid-dispute',
+      challengedAmount: 120,
+      documentIds: [],
+    });
+
+    expect(store.getById('CB-261022')?.amountCredited).toBe(120);
+    expect(store.getById('CB-261022')?.timeline.at(-1)?.amountChange).toBe(20);
+  });
+
   it('does not credit anything when a Visa response is submitted', () => {
-    store.submitResponse('CB-261018', { challengedAmount: 86.4, documentIds: [] });
+    store.submitResponse('CB-261018', {
+      reason: 'proof-of-purchase',
+      challengedAmount: 86.4,
+      documentIds: [],
+    });
     const chargeback = store.getById('CB-261018');
 
     expect(chargeback?.status).toBe('response-submitted');

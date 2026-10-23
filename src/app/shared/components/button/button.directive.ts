@@ -19,7 +19,12 @@ const VARIANTS: Record<ButtonVariant, string> = {
   secondary:
     'bg-white text-ink-strong shadow-control enabled:hover:bg-canvas enabled:hover:shadow-control-hover disabled:text-ink-placeholder disabled:shadow-field',
   destructive: 'bg-danger text-white shadow-button-primary enabled:hover:bg-danger-hover',
-  icon: 'size-8 text-ink-subtle after:absolute after:-inset-1 enabled:hover:bg-hover enabled:hover:text-ink enabled:active:bg-pressed disabled:text-ink-placeholder pointer-coarse:after:-inset-1.5',
+  icon: 'text-ink-subtle enabled:hover:bg-hover enabled:hover:text-ink enabled:active:bg-pressed disabled:text-ink-placeholder',
+};
+
+const ICON_SIZES: Record<ButtonSize, string> = {
+  default: 'size-8 after:absolute after:-inset-1 pointer-coarse:after:-inset-1.5',
+  small: 'size-6 after:absolute after:-inset-2 pointer-coarse:after:-inset-2.5',
 };
 
 @Directive({
@@ -32,7 +37,7 @@ export class ButtonDirective {
 
   protected readonly classes = computed(() => {
     const variant = this.appButton();
-    const size = variant === 'icon' ? '' : SIZES[this.size()];
+    const size = variant === 'icon' ? ICON_SIZES[this.size()] : SIZES[this.size()];
     return `${BASE} ${size} ${VARIANTS[variant]}`;
   });
 }

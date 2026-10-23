@@ -20,6 +20,10 @@ export interface PageBreadcrumb {
 
 const COMPACT_AFTER = 8;
 
+const PAGE_COPY = {
+  BACK: (label: string) => `Back to ${label}`,
+} as const;
+
 let nextPageId = 0;
 
 @Component({
@@ -44,7 +48,14 @@ export class PageComponent {
 
   protected readonly titleId = `page-title-${nextPageId++}`;
   protected readonly compact = signal(false);
+  protected readonly copy = PAGE_COPY;
   protected readonly hasBreadcrumbs = computed(() => this.breadcrumbs().length > 0);
+  protected readonly parent = computed(() =>
+    this.breadcrumbs()
+      .slice(0, -1)
+      .reverse()
+      .find((crumb) => crumb.link !== undefined),
+  );
   protected readonly slim = computed(() => this.hasBreadcrumbs() || this.compact());
 
   constructor() {

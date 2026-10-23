@@ -1,0 +1,90 @@
+<app-page [title]="title()" [breadcrumbs]="breadcrumbs()">
+  @if (chargeback()) {
+    <div class="@container mx-auto flex w-full max-w-2xl flex-col gap-6">
+      @if (worldpayNote(); as note) {
+        <aside
+          class="flex gap-3 rounded-md border border-warning-30 bg-warning-15 p-4"
+          [attr.aria-label]="copy.NOTE.TITLE"
+        >
+          <span class="mt-px shrink-0 text-warning-120" aria-hidden="true">
+            <lucide-icon
+              class="block size-5"
+              name="circle-alert"
+              [size]="20"
+              [strokeWidth]="1.5"
+              [absoluteStrokeWidth]="true"
+            />
+          </span>
+          <div class="min-w-0 flex-1">
+            <p class="font-semibold text-ink">{{ copy.NOTE.TITLE }}</p>
+            <p class="text-pretty text-ink">{{ note.text }}</p>
+            @if (note.deadline; as deadline) {
+              <p class="mt-1 text-pretty text-ink-strong tabular-nums">{{ deadline }}</p>
+            }
+          </div>
+        </aside>
+      }
+
+      <app-respond-stepper
+        [current]="flow.step()"
+        [reachable]="reachable()"
+        (select)="onSelect($event)"
+      />
+
+      <section class="flex flex-col gap-4" [attr.aria-labelledby]="headingId">
+        <h2
+          #heading
+          tabindex="-1"
+          class="border-b border-line pb-3 text-h3 outline-none"
+          [id]="headingId"
+        >
+          {{ stepTitle() }}
+        </h2>
+        @switch (flow.step()) {
+          @case ('review') {
+            <app-respond-review-step />
+          }
+          @case ('reason') {
+            <app-respond-reason-step />
+          }
+          @case ('evidence') {
+            <app-respond-evidence-step />
+          }
+          @case ('submit') {
+            <app-respond-submit-step (edit)="onSelect($event)" />
+          }
+        }
+      </section>
+
+      <div
+        class="flex flex-col-reverse gap-2 border-t border-line pt-4 @md:flex-row @md:items-center"
+      >
+        <button type="button" appButton="secondary" data-action="exit" (click)="onExit()">
+          {{ canSaveDraft() ? copy.ACTIONS.SAVE_AND_EXIT : copy.ACTIONS.CANCEL }}
+        </button>
+        <div class="flex flex-col-reverse gap-2 @md:ml-auto @md:flex-row">
+          @if (!flow.isFirst()) {
+            <button type="button" appButton="secondary" data-action="back" (click)="onBack()">
+              {{ copy.ACTIONS.BACK }}
+            </button>
+          }
+          @if (flow.isLast()) {
+            <button
+              type="button"
+              appButton="primary"
+              data-action="submit"
+              [disabled]="!flow.valid().submit"
+              (click)="onSubmit()"
+            >
+              {{ copy.ACTIONS.SUBMIT }}
+            </button>
+          } @else {
+            <button type="button" appButton="primary" data-action="next" (click)="onNext()">
+              {{ copy.ACTIONS.CONTINUE }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</app-page>

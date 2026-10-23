@@ -1,0 +1,159 @@
+<p class="text-pretty text-ink-strong">{{ copy.DESCRIPTION }}</p>
+
+<section class="flex flex-col gap-2">
+  <h3 class="font-semibold text-ink" [id]="checklistId">{{ copy.CHECKLIST }}</h3>
+  <ul
+    class="flex flex-col divide-y divide-line rounded-md border border-line"
+    [attr.aria-labelledby]="checklistId"
+  >
+    @for (row of rows(); track row.key) {
+      <li
+        class="flex flex-col gap-2 p-3"
+        [attr.data-evidence]="row.key"
+        [attr.data-done]="row.done ? '' : null"
+      >
+        <div class="flex items-center gap-2">
+          <div class="flex min-w-0 flex-1 items-start gap-2">
+            <span
+              class="mt-0.75 shrink-0"
+              [class]="row.done ? 'text-won-ink' : 'text-line-strong'"
+              aria-hidden="true"
+            >
+              <lucide-icon
+                class="block size-4"
+                [name]="row.done ? 'circle-check' : 'circle'"
+                [size]="16"
+                [strokeWidth]="1.5"
+                [absoluteStrokeWidth]="true"
+              />
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold text-ink">{{ row.label }}</p>
+              <p class="text-pretty text-ink-muted">{{ row.hint }}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            appButton="secondary"
+            size="small"
+            class="shrink-0"
+            [attr.aria-label]="copy.UPLOAD_LABEL(row.label)"
+            (click)="openUpload(row.type)"
+          >
+            <lucide-icon
+              name="upload"
+              class="block size-4 text-ink-subtle"
+              [size]="16"
+              [strokeWidth]="1.5"
+              [absoluteStrokeWidth]="true"
+              aria-hidden="true"
+            />
+            {{ copy.UPLOAD }}
+          </button>
+        </div>
+        @if (row.files.length) {
+          <ul class="ml-6 flex flex-col" [attr.aria-label]="copy.FILES(row.label)">
+            @for (file of row.files; track file.document.id) {
+              <li class="flex min-w-0 items-center gap-2" [attr.data-document]="file.document.id">
+                <span class="shrink-0 text-ink-subtle" aria-hidden="true">
+                  <lucide-icon
+                    class="block size-4"
+                    [name]="file.icon"
+                    [size]="16"
+                    [strokeWidth]="1.5"
+                    [absoluteStrokeWidth]="true"
+                  />
+                </span>
+                @if (file.canOpen) {
+                  <button
+                    type="button"
+                    class="-ml-1 inline-flex h-6 min-w-0 items-center rounded-md px-1 text-left text-ink transition-[background-color] duration-200 ease-in-out hover:bg-hover active:bg-pressed pointer-coarse:h-11"
+                    [attr.aria-label]="copy.PREVIEW(file.document.name)"
+                    (click)="flow.preview(file.document)"
+                  >
+                    <span class="truncate" [title]="file.document.name">{{
+                      file.document.name
+                    }}</span>
+                  </button>
+                } @else {
+                  <span class="min-w-0 truncate text-ink-muted" [title]="file.document.name">{{
+                    file.document.name
+                  }}</span>
+                }
+                <span class="shrink-0 text-small text-ink-muted tabular-nums">{{ file.size }}</span>
+                @if (file.status; as status) {
+                  <span
+                    class="flex shrink-0 items-center gap-1 text-small"
+                    [class]="file.failed ? 'text-lost-text' : 'text-ink-muted'"
+                  >
+                    @if (file.scanning) {
+                      <span
+                        class="block size-4 shrink-0 animate-loader rounded-full border-2 border-line border-t-ink motion-reduce:animate-none"
+                        aria-hidden="true"
+                      ></span>
+                    }
+                    {{ status }}
+                  </span>
+                }
+                <button
+                  type="button"
+                  appButton="icon"
+                  size="small"
+                  class="ml-auto shrink-0"
+                  [attr.aria-label]="copy.REMOVE(file.document.name)"
+                  (click)="flow.removeDocument(file.document.id)"
+                >
+                  <lucide-icon
+                    name="x"
+                    class="block size-4"
+                    [size]="16"
+                    [strokeWidth]="1.5"
+                    [absoluteStrokeWidth]="true"
+                    aria-hidden="true"
+                  />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </li>
+    }
+  </ul>
+  @if (error(); as message) {
+    <p class="flex items-start gap-1 text-small text-lost-text" role="alert" [id]="errorId">
+      <span class="flex h-lh shrink-0 items-center" aria-hidden="true">
+        <lucide-icon
+          name="circle-alert"
+          class="block size-3"
+          [size]="12"
+          [strokeWidth]="1"
+          [absoluteStrokeWidth]="true"
+        />
+      </span>
+      {{ message }}
+    </p>
+  }
+</section>
+
+<div class="flex flex-col gap-1">
+  <label class="font-semibold text-ink" [for]="noteId">{{ copy.NOTE_LABEL }}</label>
+  <textarea
+    rows="3"
+    maxlength="500"
+    class="min-h-20 w-full resize-y rounded-md bg-white px-3 py-2 text-ink shadow-field transition-[box-shadow] duration-200 ease-in-out hover:shadow-field-hover"
+    [id]="noteId"
+    [value]="flow.note()"
+    [attr.aria-describedby]="noteHintId"
+    (input)="onNote($event)"
+  ></textarea>
+  <p class="text-small text-ink-muted" [id]="noteHintId">{{ copy.NOTE_HINT }}</p>
+</div>
+
+<app-case-upload-dialog
+  [open]="dialogOpen()"
+  [presetType]="uploadType()"
+  [existing]="existingFiles()"
+  [maxFileBytes]="maxFileBytes()"
+  (closed)="dialogOpen.set(false)"
+  (upload)="onUpload($event)"
+/>

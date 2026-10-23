@@ -2,6 +2,7 @@ import { addDays, atTime, toIsoDate } from '../../shared/utils/date.utils';
 import {
   CardNetwork,
   ChallengeDraft,
+  ChallengeReason,
   ChargebackCase,
   ChargebackCycle,
   ChargebackDocument,
@@ -44,6 +45,7 @@ interface CaseSeed {
   readonly amount: number;
   readonly replyByDay?: number;
   readonly challengedAmount?: number;
+  readonly challengeReason?: ChallengeReason;
   readonly amountDebited: number;
   readonly amountCredited: number;
   readonly documents?: readonly ChargebackDocument[];
@@ -198,7 +200,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       ],
       draft: {
         savedAt: at(-1, 16, 24),
-        reason: 'cardholder-made-payment',
+        reason: 'proof-of-purchase',
         challengedAmount: 213,
         documentIds: ['CB-260987-doc-1'],
       },
@@ -219,6 +221,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       amount: 64.9,
       replyByDay: 4,
       challengedAmount: 64.9,
+      challengeReason: 'proof-of-purchase',
       amountDebited: 64.9,
       amountCredited: 0,
       documents: [
@@ -665,6 +668,7 @@ function toCase(seed: CaseSeed, day: (offset: number) => string): ChargebackCase
     currency: 'USD',
     replyByDate: seed.replyByDay === undefined ? undefined : day(seed.replyByDay),
     challengedAmount: seed.challengedAmount,
+    challengeReason: seed.challengeReason,
     amountDebited: seed.amountDebited,
     amountCredited: seed.amountCredited,
     documents: seed.documents ?? [],

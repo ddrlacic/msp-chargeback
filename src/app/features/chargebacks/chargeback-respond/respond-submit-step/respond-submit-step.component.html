@@ -1,0 +1,77 @@
+<p class="text-pretty text-ink-strong">{{ copy.DESCRIPTION }}</p>
+
+<dl class="flex flex-col divide-y divide-line rounded-md border border-line">
+  @for (section of sections(); track section.key) {
+    <div class="flex items-center gap-3 p-3" [attr.data-section]="section.key">
+      <div class="min-w-0 flex-1">
+        <dt class="text-small text-ink-muted">{{ section.title }}</dt>
+        @if (section.key === 'documents') {
+          <dd>
+            <ul class="mt-1 flex flex-col">
+              @for (file of files(); track file.document.id) {
+                <li class="flex min-w-0 items-center gap-2">
+                  <span class="shrink-0 text-ink-subtle" aria-hidden="true">
+                    <lucide-icon
+                      class="block size-4"
+                      [name]="file.icon"
+                      [size]="16"
+                      [strokeWidth]="1.5"
+                      [absoluteStrokeWidth]="true"
+                    />
+                  </span>
+                  @if (file.canOpen) {
+                    <button
+                      type="button"
+                      class="-ml-1 inline-flex h-8 min-w-0 items-center rounded-md px-1 text-left text-ink transition-[background-color] duration-200 ease-in-out hover:bg-hover active:bg-pressed pointer-coarse:h-11"
+                      (click)="preview(file.document)"
+                    >
+                      <span class="truncate" [title]="file.document.name">{{
+                        file.document.name
+                      }}</span>
+                    </button>
+                  } @else {
+                    <span class="min-w-0 truncate text-ink-muted" [title]="file.document.name">{{
+                      file.document.name
+                    }}</span>
+                  }
+                  <span class="shrink-0 text-small text-ink-muted tabular-nums"
+                    >{{ file.type }} · {{ file.size }}</span
+                  >
+                </li>
+              }
+            </ul>
+          </dd>
+        } @else {
+          <dd class="text-pretty break-words text-ink tabular-nums">{{ section.value }}</dd>
+        }
+      </div>
+      <button
+        type="button"
+        class="relative -my-1 -mr-1 inline-flex h-8 shrink-0 items-center rounded-md px-2 font-semibold text-brand-primary transition-[background-color] duration-200 ease-in-out after:absolute after:inset-x-0 after:-inset-y-1 hover:bg-hover active:bg-pressed pointer-coarse:after:-inset-y-2"
+        [attr.aria-label]="section.editLabel"
+        (click)="edit.emit(section.step)"
+      >
+        {{ copy.EDIT }}
+      </button>
+    </div>
+  }
+</dl>
+
+<section class="rounded-md bg-canvas p-4">
+  <h3 class="font-semibold text-ink">{{ copy.NEXT_TITLE }}</h3>
+  <p class="text-pretty text-ink-strong tabular-nums">{{ next() }}</p>
+</section>
+
+@if (warning(); as message) {
+  <p class="flex items-start gap-1.5 text-ink-muted" role="status">
+    <lucide-icon
+      name="hourglass"
+      class="mt-0.5 block size-4 shrink-0"
+      [size]="16"
+      [strokeWidth]="1.5"
+      [absoluteStrokeWidth]="true"
+      aria-hidden="true"
+    />
+    {{ message }}
+  </p>
+}

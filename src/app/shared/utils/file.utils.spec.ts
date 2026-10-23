@@ -20,6 +20,8 @@ describe('file utils', () => {
 
   it('knows which files are images', () => {
     expect(isImageFile('delivery-photo.jpg')).toBe(true);
+    expect(isImageFile('scan.TIF')).toBe(true);
+    expect(isImageFile('stamp.gif')).toBe(true);
     expect(isImageFile('receipt.pdf')).toBe(false);
   });
 
@@ -27,6 +29,9 @@ describe('file utils', () => {
     expect(getMimeType('receipt.pdf')).toBe('application/pdf');
     expect(getMimeType('photo.jpeg')).toBe('image/jpeg');
     expect(getMimeType('photo.png')).toBe('image/png');
+    expect(getMimeType('stamp.gif')).toBe('image/gif');
+    expect(getMimeType('scan.tif')).toBe('image/tiff');
+    expect(getMimeType('scan.tiff')).toBe('image/tiff');
   });
 
   it('builds a PDF whose cross-reference table points at each object', () => {

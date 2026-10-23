@@ -3,11 +3,12 @@ import { routes } from './app.routes';
 describe('app routes', () => {
   const shellChildren = routes[0].children ?? [];
 
-  it('serves the chargeback list and case pages inside the shell', () => {
+  it('serves the chargeback list, case and respond pages inside the shell', () => {
     expect(shellChildren.map((route) => route.path)).toEqual([
       '',
       'chargebacks',
       'chargebacks/:caseId',
+      'chargebacks/:caseId/respond',
       'dashboard',
       'deposit-details',
       'sub-merchants',

@@ -1,12 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { Router } from '@angular/router';
+import type { MockInstance } from 'vitest';
 
+import { ChargebackStore } from '../../../services/chargeback/chargeback.store';
 import { installDialogPolyfill } from '../../../testing/dialog';
 import { getTestProviders } from '../../../testing/providers';
 import { ChargebackCaseComponent } from './chargeback-case.component';
 
 describe('ChargebackCaseComponent', () => {
   let fixture: ComponentFixture<ChargebackCaseComponent>;
+  let navigate: MockInstance<Router['navigate']>;
 
   beforeAll(() => installDialogPolyfill());
 
@@ -15,6 +19,7 @@ describe('ChargebackCaseComponent', () => {
       imports: [ChargebackCaseComponent],
       providers: getTestProviders(),
     }).compileComponents();
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
   });
 
   function render(caseId: string): HTMLElement {
@@ -82,6 +87,65 @@ describe('ChargebackCaseComponent', () => {
     click(banner.nativeElement.querySelector('[data-action="resubmit"]'));
 
     expect(action).toHaveBeenCalledExactlyOnceWith('resubmit');
+  });
+
+  it('opens the challenge flow from the challenge button', () => {
+    const element = render('CB-261018');
+
+    click(element.querySelector('app-case-status-banner [data-action="challenge"]'));
+
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(['/chargebacks', 'CB-261018', 'respond']);
+  });
+
+  it('opens the flow from the pending row of the timeline', () => {
+    const element = render('CB-260987');
+
+    click(element.querySelector('app-case-timeline [data-pending] button'));
+
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(['/chargebacks', 'CB-260987', 'respond']);
+  });
+
+  it('asks to confirm before accepting a chargeback', () => {
+    const element = render('CB-261018');
+    const dialog = element.querySelector('app-case-accept-dialog dialog');
+
+    expect(dialog?.hasAttribute('open')).toBe(false);
+
+    click(element.querySelector('app-case-status-banner [data-action="accept"]'));
+
+    expect(dialog?.hasAttribute('open')).toBe(true);
+    expect(text(dialog?.querySelector('h2'))).toBe('Accept chargeback');
+    expect(text(dialog?.querySelector('p'))).toBe(
+      '$86.40 stays charged and the case closes. You cannot undo this.',
+    );
+    expect(TestBed.inject(ChargebackStore).getById('CB-261018')?.status).toBe('action-required');
+  });
+
+  it('keeps the case open when the merchant cancels the dialog', () => {
+    const element = render('CB-261018');
+    click(element.querySelector('app-case-status-banner [data-action="accept"]'));
+
+    click(element.querySelector('app-case-accept-dialog [data-action="cancel"]'));
+
+    expect(element.querySelector('app-case-accept-dialog dialog')?.hasAttribute('open')).toBe(
+      false,
+    );
+    expect(TestBed.inject(ChargebackStore).getById('CB-261018')?.status).toBe('action-required');
+  });
+
+  it('accepts the chargeback once the merchant confirms', () => {
+    const element = render('CB-261018');
+    click(element.querySelector('app-case-status-banner [data-action="accept"]'));
+
+    click(element.querySelector('app-case-accept-dialog [data-action="confirm"]'));
+
+    expect(TestBed.inject(ChargebackStore).getById('CB-261018')?.status).toBe('accepted');
+    expect(element.querySelector('app-case-accept-dialog dialog')?.hasAttribute('open')).toBe(
+      false,
+    );
+    expect(text(element.querySelector('app-case-header app-chargeback-status-badge'))).toBe(
+      'Accepted',
+    );
   });
 
   it('shows Worldpay’s note on a returned response', () => {

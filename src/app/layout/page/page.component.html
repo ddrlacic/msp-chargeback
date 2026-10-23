@@ -10,7 +10,27 @@
   >
     @if (hasBreadcrumbs()) {
       <nav aria-label="Breadcrumb">
-        <ol class="flex min-h-[22px] flex-wrap items-center gap-2">
+        @if (parent(); as parent) {
+          <a
+            class="relative -ml-1 flex min-h-[22px] min-w-0 items-center gap-1 text-ink-muted transition-[color] duration-200 ease-in-out after:absolute after:-inset-x-1 after:-inset-y-[9px] hover:text-ink sm:hidden pointer-coarse:after:-inset-y-[11px]"
+            data-back
+            [routerLink]="parent.link"
+          >
+            <lucide-icon
+              name="chevron-left"
+              class="size-4 shrink-0 text-ink-subtle"
+              [size]="16"
+              [strokeWidth]="1.5"
+              [absoluteStrokeWidth]="true"
+              aria-hidden="true"
+            />
+            <span class="truncate">{{ copy.BACK(parent.label) }}</span>
+          </a>
+        }
+        <ol
+          class="min-h-[22px] flex-wrap items-center gap-2"
+          [class]="parent() ? 'hidden sm:flex' : 'flex'"
+        >
           @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
             <li class="flex min-w-0 items-center gap-2">
               @if (crumb.link && !last) {

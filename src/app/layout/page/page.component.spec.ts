@@ -92,6 +92,30 @@ describe('PageComponent', () => {
     expect(header(fixture).classList.contains('py-3')).toBe(true);
   });
 
+  it('offers a back link to the nearest linked parent for narrow screens', async () => {
+    const fixture = await setup({
+      breadcrumbs: [
+        { label: 'Chargebacks', link: '/chargebacks' },
+        { label: 'CB-1', link: '/chargebacks/CB-1' },
+        { label: 'Challenge chargeback' },
+      ],
+    });
+    const element = fixture.nativeElement as HTMLElement;
+    const back = element.querySelector('a[data-back]');
+
+    expect(back?.textContent?.trim()).toBe('Back to CB-1');
+    expect(back?.getAttribute('href')).toBe('/chargebacks/CB-1');
+    expect(element.querySelector('nav ol')?.classList.contains('hidden')).toBe(true);
+  });
+
+  it('has no back link when the trail has no linked parent', async () => {
+    const fixture = await setup({ breadcrumbs: [{ label: 'CB-1' }] });
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('a[data-back]')).toBe(null);
+    expect(element.querySelector('nav ol')?.classList.contains('hidden')).toBe(false);
+  });
+
   it('shrinks the main page header once the content scrolls and restores it at the top', async () => {
     const fixture = await setup();
 

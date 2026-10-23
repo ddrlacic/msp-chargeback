@@ -17,7 +17,7 @@ export function getFileExtension(name: string): string {
 }
 
 export function isImageFile(name: string): boolean {
-  return ['jpg', 'jpeg', 'png'].includes(getFileExtension(name));
+  return ['jpg', 'jpeg', 'png', 'gif', 'tif', 'tiff'].includes(getFileExtension(name));
 }
 
 export function getMimeType(name: string): string {
@@ -29,6 +29,11 @@ export function getMimeType(name: string): string {
     case 'jpg':
     case 'jpeg':
       return 'image/jpeg';
+    case 'gif':
+      return 'image/gif';
+    case 'tif':
+    case 'tiff':
+      return 'image/tiff';
     default:
       return 'application/octet-stream';
   }

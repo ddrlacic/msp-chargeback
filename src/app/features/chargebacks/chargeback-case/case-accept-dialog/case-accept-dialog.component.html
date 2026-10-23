@@ -1,0 +1,25 @@
+<app-dialog
+  [open]="open()"
+  [title]="copy.TITLE"
+  [description]="copy.DESCRIPTION(amount())"
+  (closed)="closed.emit()"
+>
+  <button
+    type="button"
+    dialogActions
+    appButton="secondary"
+    data-action="cancel"
+    (click)="closed.emit()"
+  >
+    {{ copy.CANCEL }}
+  </button>
+  <button
+    type="button"
+    dialogActions
+    appButton="destructive"
+    data-action="confirm"
+    (click)="confirmed.emit()"
+  >
+    {{ copy.CONFIRM }}
+  </button>
+</app-dialog>

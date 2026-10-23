@@ -4,6 +4,7 @@ import { CLOCK } from '../../shared/clock';
 import { createChargebackFixtures, FIXTURE_BRAND } from './chargeback.fixtures';
 import {
   ChallengeDraft,
+  ChallengeReason,
   ChargebackCase,
   ChargebackDocument,
   ChargebackDocumentType,
@@ -13,8 +14,10 @@ import {
 import { getAllowedActions, roundMoney } from './chargeback.utils';
 
 export interface SubmitResponseInput {
+  readonly reason: ChallengeReason;
   readonly challengedAmount: number;
   readonly documentIds: readonly string[];
+  readonly note?: string;
 }
 
 export type SaveDraftInput = Omit<ChallengeDraft, 'savedAt'>;
@@ -102,7 +105,8 @@ export class ChargebackStore {
 
   submitResponse(caseId: string, input: SubmitResponseInput): void {
     this.updateCase(caseId, (chargeback) => {
-      const credit = chargeback.network === 'visa' ? undefined : input.challengedAmount;
+      const resubmitted = chargeback.status === 'returned-by-worldpay';
+      const credit = this.getResponseCredit(chargeback, input.challengedAmount, resubmitted);
       return this.withEvent(
         {
           ...this.withStatus(chargeback, 'response-submitted'),
@@ -110,12 +114,15 @@ export class ChargebackStore {
           draft: undefined,
           worldpayNote: undefined,
           challengedAmount: input.challengedAmount,
+          challengeReason: input.reason,
+          challengeNote: input.note || undefined,
           amountCredited: roundMoney(chargeback.amountCredited + (credit ?? 0)),
         },
         {
           actor: 'merchant',
-          title: 'Response sent to Worldpay',
+          title: resubmitted ? 'Updated response sent to Worldpay' : 'Response sent to Worldpay',
           worldpayTerm: 'Represent',
+          description: input.note || undefined,
           amountChange: credit,
           documentIds: input.documentIds,
         },
@@ -133,6 +140,20 @@ export class ChargebackStore {
 
   private createInitialCases(): readonly ChargebackCase[] {
     return createChargebackFixtures(this.clock.now());
+  }
+
+  private getResponseCredit(
+    chargeback: ChargebackCase,
+    challengedAmount: number,
+    resubmitted: boolean,
+  ): number | undefined {
+    if (chargeback.network === 'visa') {
+      return undefined;
+    }
+    const credit = roundMoney(
+      Math.max(0, challengedAmount - (resubmitted ? chargeback.amountCredited : 0)),
+    );
+    return credit || undefined;
   }
 
   private finishScan(caseId: string, documentIds: readonly string[]): void {

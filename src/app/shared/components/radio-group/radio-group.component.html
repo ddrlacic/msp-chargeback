@@ -1,0 +1,20 @@
+@for (option of options(); track option.value) {
+  <label
+    class="relative flex items-start gap-2 rounded-md bg-white p-3 shadow-control transition-[box-shadow] duration-200 ease-in-out hover:shadow-control-hover has-checked:shadow-card-selected has-checked:hover:shadow-card-selected"
+  >
+    <input
+      type="radio"
+      class="mt-0.75 size-4 shrink-0 appearance-none rounded-full border border-line-strong bg-white transition-[border-color,border-width] duration-150 ease-in-out checked:border-[5px] checked:border-brand-primary motion-reduce:transition-none"
+      [name]="name"
+      [value]="option.value"
+      [checked]="value() === option.value"
+      (change)="onChange($event)"
+    />
+    <span class="flex min-w-0 flex-col">
+      <span class="font-semibold text-ink">{{ option.label }}</span>
+      @if (option.description; as description) {
+        <span class="text-pretty text-ink-muted">{{ description }}</span>
+      }
+    </span>
+  </label>
+}

@@ -1,8 +1,12 @@
+import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Routes } from '@angular/router';
 
-import { CHARGEBACKS_CONSTANTS } from './features/chargebacks/chargebacks.constants';
+import { chargebackRespondGuard } from './features/chargebacks/chargeback-respond/chargeback-respond.guard';
+import { getRespondTitle } from './features/chargebacks/chargeback-respond/chargeback-respond.utils';
+import { CHARGEBACKS_CONSTANTS, RESPOND_PATH } from './features/chargebacks/chargebacks.constants';
 import { getPlaceholderLinks } from './layout/app-sidebar/sidebar.constants';
 import { ShellComponent } from './layout/shell/shell.component';
+import { ChargebackStore } from './services/chargeback/chargeback.store';
 
 const placeholderRoutes: Routes = getPlaceholderLinks().map((link) => ({
   path: link.path.slice(1),
@@ -35,6 +39,16 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/chargebacks/chargeback-case/chargeback-case.component').then(
             (m) => m.ChargebackCaseComponent,
+          ),
+      },
+      {
+        path: `chargebacks/:caseId/${RESPOND_PATH}`,
+        title: (route: ActivatedRouteSnapshot) =>
+          getRespondTitle(inject(ChargebackStore).getById(route.paramMap.get('caseId') ?? '')),
+        canActivate: [chargebackRespondGuard],
+        loadComponent: () =>
+          import('./features/chargebacks/chargeback-respond/chargeback-respond.component').then(
+            (m) => m.ChargebackRespondComponent,
           ),
       },
       ...placeholderRoutes,

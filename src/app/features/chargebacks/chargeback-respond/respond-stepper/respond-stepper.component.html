@@ -1,0 +1,72 @@
+<nav [attr.aria-label]="copy.STEPS_LABEL">
+  <ol class="flex items-center">
+    @for (item of items(); track item.key; let last = $last) {
+      <li class="flex items-center" [class.flex-auto]="!last" [attr.data-step]="item.key">
+        @if (item.reachable && item.status !== 'current') {
+          <button
+            type="button"
+            class="relative flex items-center gap-2 whitespace-nowrap rounded-md text-ink after:absolute after:-inset-x-1 after:-inset-y-2"
+            [attr.data-status]="item.status"
+            (click)="select.emit(item.key)"
+          >
+            <ng-container
+              [ngTemplateOutlet]="marker"
+              [ngTemplateOutletContext]="{ $implicit: item }"
+            />
+            <span class="@max-xl:sr-only">{{ item.label }}</span>
+          </button>
+        } @else {
+          <span
+            class="flex items-center gap-2 whitespace-nowrap"
+            [class]="item.status === 'current' ? 'font-semibold text-ink' : 'text-ink-muted'"
+            [attr.aria-current]="item.status === 'current' ? 'step' : null"
+            [attr.data-status]="item.status"
+          >
+            <ng-container
+              [ngTemplateOutlet]="marker"
+              [ngTemplateOutletContext]="{ $implicit: item }"
+            />
+            <span class="@max-xl:sr-only">{{ item.label }}</span>
+          </span>
+        }
+        @if (!last) {
+          <span
+            class="mx-3 h-px min-w-3 flex-1 transition-[background-color] duration-200 ease-in-out"
+            [class]="item.status === 'complete' ? 'bg-brand-primary' : 'bg-line-strong'"
+            aria-hidden="true"
+          ></span>
+        }
+      </li>
+    }
+  </ol>
+  <p class="mt-2 text-small text-ink-muted tabular-nums @xl:hidden">{{ position() }}</p>
+</nav>
+
+<ng-template #marker let-item>
+  <span
+    class="grid size-6 shrink-0 place-items-center rounded-full text-small font-semibold tabular-nums transition-[background-color,box-shadow,color] duration-200 ease-in-out"
+    [class]="
+      item.status === 'complete'
+        ? 'bg-brand-primary text-white'
+        : item.status === 'current'
+          ? 'bg-white text-brand-primary shadow-[inset_0_0_0_1.5px_var(--color-accent-100)]'
+          : 'bg-white text-ink-muted shadow-field'
+    "
+    aria-hidden="true"
+  >
+    @if (item.status === 'complete') {
+      <lucide-icon
+        name="check"
+        class="block size-3"
+        [size]="12"
+        [strokeWidth]="2"
+        [absoluteStrokeWidth]="true"
+      />
+    } @else {
+      {{ item.number }}
+    }
+  </span>
+  @if (item.status === 'complete') {
+    <span class="sr-only">{{ copy.STEP_DONE }}</span>
+  }
+</ng-template>

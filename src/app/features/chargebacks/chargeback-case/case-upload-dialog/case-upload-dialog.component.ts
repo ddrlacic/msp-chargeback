@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  linkedSignal,
+  output,
+  signal,
+} from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { ChargebackDocumentType } from '../../../../services/chargeback/chargeback.types';
@@ -9,7 +17,12 @@ import {
   CHARGEBACK_DOCUMENT_TYPE_LABELS,
   CHARGEBACKS_CONSTANTS,
 } from '../../chargebacks.constants';
-import { addUploadFiles, UPLOAD_ACCEPT } from './case-upload-dialog.utils';
+import {
+  addUploadFiles,
+  UPLOAD_ACCEPT,
+  UPLOAD_MAX_FILE_BYTES,
+  UploadFileLike,
+} from './case-upload-dialog.utils';
 
 export interface DocumentUploadRequest {
   readonly type: ChargebackDocumentType;
@@ -26,6 +39,9 @@ let nextUploadId = 0;
 })
 export class CaseUploadDialogComponent {
   readonly open = input(false);
+  readonly presetType = input<ChargebackDocumentType>();
+  readonly existing = input<readonly UploadFileLike[]>([]);
+  readonly maxFileBytes = input(UPLOAD_MAX_FILE_BYTES);
   readonly closed = output<void>();
   readonly upload = output<DocumentUploadRequest>();
 
@@ -36,7 +52,9 @@ export class CaseUploadDialogComponent {
     Object.entries(CHARGEBACK_DOCUMENT_TYPE_LABELS) as [ChargebackDocumentType, string][]
   ).map(([value, label]) => ({ value, label }));
 
-  protected readonly type = signal<ChargebackDocumentType | ''>('');
+  protected readonly type = linkedSignal<ChargebackDocumentType | ''>(
+    () => this.presetType() ?? '',
+  );
   protected readonly files = signal<readonly File[]>([]);
   protected readonly errors = signal<readonly string[]>([]);
   protected readonly dragging = signal(false);
@@ -44,6 +62,7 @@ export class CaseUploadDialogComponent {
   protected readonly fileRows = computed(() =>
     this.files().map((file) => ({ file, size: formatFileSize(file.size) })),
   );
+  protected readonly hint = computed(() => this.copy.HINT(formatFileSize(this.maxFileBytes())));
   protected readonly canSubmit = computed(() => this.type() !== '' && this.files().length > 0);
   protected readonly submitLabel = computed(() => this.copy.SUBMIT(this.files().length));
 
@@ -95,13 +114,16 @@ export class CaseUploadDialogComponent {
   }
 
   private addFiles(incoming: readonly File[]): void {
-    const selection = addUploadFiles(this.files(), incoming);
+    const selection = addUploadFiles(this.files(), incoming, {
+      maxFileBytes: this.maxFileBytes(),
+      existing: this.existing(),
+    });
     this.files.set(selection.files);
     this.errors.set(selection.errors);
   }
 
   private reset(): void {
-    this.type.set('');
+    this.type.set(this.presetType() ?? '');
     this.files.set([]);
     this.errors.set([]);
     this.dragging.set(false);
