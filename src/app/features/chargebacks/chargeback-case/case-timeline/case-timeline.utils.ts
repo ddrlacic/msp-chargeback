@@ -131,11 +131,15 @@ function getEventMeta(chargeback: ChargebackCase, event: TimelineEvent): string 
 }
 
 function getEventMoney(chargeback: ChargebackCase, event: TimelineEvent): string | undefined {
-  if (event.amountChange === undefined) {
-    return undefined;
+  const parts: string[] = [];
+  if (event.amountChange !== undefined) {
+    const amount = formatMoney(Math.abs(event.amountChange), chargeback.currency);
+    parts.push(event.amountChange < 0 ? copy.MONEY.DEBITED(amount) : copy.MONEY.CREDITED(amount));
   }
-  const amount = formatMoney(Math.abs(event.amountChange), chargeback.currency);
-  return event.amountChange < 0 ? copy.MONEY.DEBITED(amount) : copy.MONEY.CREDITED(amount);
+  if (event.arbitrationFees) {
+    parts.push(copy.MONEY.FEES(formatMoney(event.arbitrationFees, chargeback.currency)));
+  }
+  return parts.length ? parts.join(' · ') : undefined;
 }
 
 function getEventDocuments(

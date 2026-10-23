@@ -68,7 +68,7 @@ describe('chargebacks list utils', () => {
 
   describe('filters', () => {
     it('keeps every case without filters', () => {
-      expect(filterIds({}).length).toBe(17);
+      expect(filterIds({}).length).toBe(20);
       expect(hasActiveFilters(DEFAULT_LIST_FILTERS)).toBe(false);
     });
 
@@ -76,12 +76,12 @@ describe('chargebacks list utils', () => {
       expect(filterIds({ search: 'cb-26102' })).toEqual(['CB-261022']);
       expect(filterIds({ search: 'ORD-58213' })).toEqual(['CB-261018']);
       expect(filterIds({ search: '5530' })).toEqual(['CB-261022']);
-      expect(filterIds({ search: ' MID-880103 ' }).length).toBe(4);
+      expect(filterIds({ search: ' MID-880103 ' }).length).toBe(5);
     });
 
     it('filters by location and card network', () => {
-      expect(filterIds({ merchantIds: ['MID-880103'] }).length).toBe(4);
-      expect(filterIds({ networks: ['visa'] }).length).toBe(6);
+      expect(filterIds({ merchantIds: ['MID-880103'] }).length).toBe(5);
+      expect(filterIds({ networks: ['visa'] }).length).toBe(8);
       expect(filterIds({ networks: ['amex'], merchantIds: ['MID-880102'] })).toEqual(['CB-260588']);
     });
 
@@ -89,7 +89,7 @@ describe('chargebacks list utils', () => {
       expect(filterIds({ received: 'last-7-days' })).toEqual(['CB-261022', 'CB-261031']);
       expect(filterIds({ received: 'last-30-days' }).length).toBe(8);
       expect(filterIds({ received: 'this-month' }).length).toBe(7);
-      expect(filterIds({ received: 'last-month' }).length).toBe(6);
+      expect(filterIds({ received: 'last-month' }).length).toBe(7);
     });
 
     it('builds date ranges from today', () => {
@@ -173,18 +173,18 @@ describe('chargebacks list utils', () => {
   describe('tabs and summary', () => {
     it('counts and sums cases per state, with what was returned for won cases', () => {
       expect(summarizeTabs(rows).map(({ tab, count }) => ({ tab, count }))).toEqual([
-        { tab: 'all', count: 17 },
-        { tab: 'needs-action', count: 7 },
+        { tab: 'all', count: 20 },
+        { tab: 'needs-action', count: 8 },
         { tab: 'in-review', count: 4 },
-        { tab: 'won', count: 3 },
-        { tab: 'lost', count: 3 },
+        { tab: 'won', count: 4 },
+        { tab: 'lost', count: 4 },
       ]);
       const amounts = summarizeTabs(rows).map((item) => item.amount);
-      expect(amounts.slice(1, 4)).toEqual([1053.75, 522.89, 234.05]);
+      expect(amounts.slice(1, 4)).toEqual([1148.25, 522.89, 366.85]);
     });
 
     it('counts the cases that need action and are due soon', () => {
-      expect(countDueSoon(rows)).toBe(4);
+      expect(countDueSoon(rows)).toBe(5);
     });
 
     it('lists each location once, by name', () => {
@@ -201,8 +201,9 @@ describe('chargebacks list utils', () => {
     it('puts the soonest due date first and cases without one last', () => {
       const ids = sortRows(rows, DEFAULT_LIST_SORT).map((row) => row.caseId);
 
-      expect(ids.slice(0, 7)).toEqual([
+      expect(ids.slice(0, 8)).toEqual([
         'CB-261031',
+        'CB-260748',
         'CB-261018',
         'CB-260954',
         'CB-260790',
@@ -210,14 +211,14 @@ describe('chargebacks list utils', () => {
         'CB-260815',
         'CB-261022',
       ]);
-      expect(ids[7]).toBe('CB-260921');
+      expect(ids[8]).toBe('CB-260921');
     });
 
     it('keeps cases without a due date last when sorting latest first', () => {
       const ids = sortRows(rows, { key: 'dueDate', direction: 'desc' }).map((row) => row.caseId);
 
       expect(ids[0]).toBe('CB-261022');
-      expect(ids[6]).toBe('CB-261031');
+      expect(ids[7]).toBe('CB-261031');
     });
 
     it('sorts by amount and by status', () => {

@@ -3,6 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { CLOCK } from '../../shared/clock';
 import { createChargebackFixtures, FIXTURE_BRAND } from './chargeback.fixtures';
 import {
+  ArbitrationRuling,
   ChallengeDraft,
   ChallengeReason,
   ChargebackCase,
@@ -11,7 +12,13 @@ import {
   ChargebackStatus,
   TimelineEvent,
 } from './chargeback.types';
-import { getAllowedActions, roundMoney } from './chargeback.utils';
+import {
+  getAllowedActions,
+  getAmountAtStake,
+  getArbitrationFeeSchedule,
+  getArbitrationFeeTotal,
+  roundMoney,
+} from './chargeback.utils';
 
 export interface SubmitResponseInput {
   readonly reason: ChallengeReason;
@@ -98,18 +105,23 @@ export class ChargebackStore {
 
   saveDraft(caseId: string, draft: SaveDraftInput): void {
     this.updateCase(caseId, (chargeback) => ({
-      ...this.withStatus(chargeback, 'evidence-required'),
+      ...(chargeback.status === 'pre-arbitration-response-required'
+        ? chargeback
+        : this.withStatus(chargeback, 'evidence-required')),
       draft: { ...draft, savedAt: this.clock.now().toISOString() },
     }));
   }
 
   submitResponse(caseId: string, input: SubmitResponseInput): void {
     this.updateCase(caseId, (chargeback) => {
+      const preArbitration = chargeback.status === 'pre-arbitration-response-required';
       const resubmitted = chargeback.status === 'returned-by-worldpay';
-      const credit = this.getResponseCredit(chargeback, input.challengedAmount, resubmitted);
+      const credit = preArbitration
+        ? undefined
+        : this.getResponseCredit(chargeback, input.challengedAmount, resubmitted);
       return this.withEvent(
         {
-          ...this.withStatus(chargeback, 'response-submitted'),
+          ...this.withStatus(chargeback, preArbitration ? 'under-review' : 'response-submitted'),
           replyByDate: undefined,
           draft: undefined,
           worldpayNote: undefined,
@@ -120,11 +132,68 @@ export class ChargebackStore {
         },
         {
           actor: 'merchant',
-          title: resubmitted ? 'Updated response sent to Worldpay' : 'Response sent to Worldpay',
+          title: this.getResponseTitle(preArbitration, resubmitted),
           worldpayTerm: 'Represent',
           description: input.note || undefined,
           amountChange: credit,
           documentIds: input.documentIds,
+        },
+      );
+    });
+  }
+
+  requestArbitration(caseId: string): void {
+    this.updateCase(caseId, (chargeback) =>
+      this.withEvent(
+        {
+          ...this.withStatus(chargeback, 'arbitration'),
+          cycle: 'arbitration',
+          replyByDate: undefined,
+        },
+        {
+          actor: 'merchant',
+          title: 'You took the case to arbitration',
+          worldpayTerm: 'Request arbitration',
+        },
+      ),
+    );
+  }
+
+  recordArbitrationRuling(caseId: string, ruling: ArbitrationRuling, returnedAmount?: number): void {
+    this.updateCase(caseId, (chargeback) => {
+      const atStake = getAmountAtStake(chargeback);
+      const closed: ChargebackCase = {
+        ...this.withStatus(chargeback, ruling),
+        cycle: 'arbitration',
+        replyByDate: undefined,
+      };
+      if (ruling === 'lost') {
+        const schedule = getArbitrationFeeSchedule(chargeback.network);
+        const fees = schedule ? getArbitrationFeeTotal(schedule) : undefined;
+        return this.withEvent(
+          {
+            ...closed,
+            arbitrationFees: fees && roundMoney((chargeback.arbitrationFees ?? 0) + fees),
+          },
+          {
+            actor: 'card-network',
+            title: 'Resolved in the cardholder’s favor',
+            worldpayTerm: 'Arbitration lost',
+            arbitrationFees: fees,
+          },
+        );
+      }
+      const credit =
+        ruling === 'won'
+          ? atStake
+          : roundMoney(Math.min(returnedAmount ?? atStake / 2, atStake));
+      return this.withEvent(
+        { ...closed, amountCredited: roundMoney(chargeback.amountCredited + credit) },
+        {
+          actor: 'card-network',
+          title: ruling === 'won' ? 'Resolved in your favor' : 'Partially resolved in your favor',
+          worldpayTerm: ruling === 'won' ? 'Arbitration won' : 'Arbitration split',
+          amountChange: credit || undefined,
         },
       );
     });
@@ -140,6 +209,13 @@ export class ChargebackStore {
 
   private createInitialCases(): readonly ChargebackCase[] {
     return createChargebackFixtures(this.clock.now());
+  }
+
+  private getResponseTitle(preArbitration: boolean, resubmitted: boolean): string {
+    if (preArbitration) {
+      return 'Pre-arbitration response sent to Worldpay';
+    }
+    return resubmitted ? 'Updated response sent to Worldpay' : 'Response sent to Worldpay';
   }
 
   private getResponseCredit(

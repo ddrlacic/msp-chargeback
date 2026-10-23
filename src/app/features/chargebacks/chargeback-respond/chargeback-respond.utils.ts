@@ -10,6 +10,7 @@ import { formatMoney } from '../../../shared/utils/money.utils';
 import {
   CARD_NETWORK_LABELS,
   CARD_NETWORK_LOGOS,
+  CHALLENGE_REASON_COPY,
   CHARGEBACK_DOCUMENT_TYPE_HINTS,
   CHARGEBACK_DOCUMENT_TYPE_LABELS,
   CHARGEBACKS_CONSTANTS,
@@ -18,7 +19,7 @@ import {
 const copy = CHARGEBACKS_CONSTANTS.RESPOND;
 const caseCopy = CHARGEBACKS_CONSTANTS.CASE;
 
-export type RespondMode = 'challenge' | 'resubmit';
+export type RespondMode = 'challenge' | 'resubmit' | 'pre-arbitration';
 
 export const RESPOND_STEPS = ['review', 'reason', 'evidence', 'submit'] as const;
 
@@ -65,14 +66,30 @@ export interface ReviewRow {
   readonly logo?: string;
 }
 
+export interface PreviousResponse {
+  readonly sentAt: string;
+  readonly rows: readonly ReviewRow[];
+  readonly documents: readonly ChargebackDocument[];
+  readonly note?: string;
+}
+
 export function getRespondMode(chargeback: ChargebackCase): RespondMode | undefined {
   const actions = chargeback.allowedActions;
   if (actions.includes('resubmit')) {
     return 'resubmit';
   }
+  if (actions.includes('respond-pre-arbitration')) {
+    return 'pre-arbitration';
+  }
   return actions.includes('challenge') || actions.includes('continue-challenge')
     ? 'challenge'
     : undefined;
+}
+
+export function getMaxChallengeAmount(chargeback: ChargebackCase): number {
+  return getRespondMode(chargeback) === 'pre-arbitration'
+    ? (chargeback.challengedAmount ?? chargeback.chargebackAmount)
+    : chargeback.chargebackAmount;
 }
 
 export function getRespondTitle(chargeback: ChargebackCase | undefined): string {
@@ -118,6 +135,7 @@ export function getAmountError(max: number, currency: string): string {
 
 export function createInitialState(chargeback: ChargebackCase): RespondFormState {
   const mode = getRespondMode(chargeback);
+  const max = getMaxChallengeAmount(chargeback);
   const existingIds = new Set(chargeback.documents.map((document) => document.id));
   if (mode === 'resubmit') {
     return withAmount(
@@ -129,12 +147,18 @@ export function createInitialState(chargeback: ChargebackCase): RespondFormState
         note: chargeback.challengeNote ?? '',
       },
       chargeback.challengedAmount,
-      chargeback.chargebackAmount,
+      max,
     );
   }
   const draft = chargeback.draft;
   if (!draft) {
-    return { amountChoice: 'full', amountText: '', documentIds: [], note: '' };
+    return {
+      reason: mode === 'pre-arbitration' ? chargeback.challengeReason : undefined,
+      amountChoice: 'full',
+      amountText: '',
+      documentIds: [],
+      note: '',
+    };
   }
   return withAmount(
     {
@@ -145,8 +169,78 @@ export function createInitialState(chargeback: ChargebackCase): RespondFormState
       note: draft.note ?? '',
     },
     draft.challengedAmount,
-    chargeback.chargebackAmount,
+    max,
   );
+}
+
+export function hasFormChanged(current: RespondFormState, initial: RespondFormState): boolean {
+  const amount = (state: RespondFormState) =>
+    state.amountChoice === 'partial' && state.amountText.trim() !== ''
+      ? state.amountText.trim()
+      : 'full';
+  return (
+    current.reason !== initial.reason ||
+    amount(current) !== amount(initial) ||
+    current.note.trim() !== initial.note.trim() ||
+    current.documentIds.length !== initial.documentIds.length ||
+    current.documentIds.some((id, index) => id !== initial.documentIds[index])
+  );
+}
+
+export function getPreviousResponse(chargeback: ChargebackCase): PreviousResponse | undefined {
+  const event = [...chargeback.timeline]
+    .reverse()
+    .find((item) => item.actor === 'merchant' && item.documentIds !== undefined);
+  if (!event) {
+    return undefined;
+  }
+  const labels = copy.EVIDENCE.PREVIOUS;
+  const amount = chargeback.challengedAmount ?? chargeback.chargebackAmount;
+  const rows: ReviewRow[] = [];
+  if (chargeback.challengeReason) {
+    rows.push({
+      key: 'reason',
+      label: labels.REASON,
+      value: CHALLENGE_REASON_COPY[chargeback.challengeReason].label,
+    });
+  }
+  rows.push({
+    key: 'amount',
+    label: labels.AMOUNT,
+    value:
+      amount === chargeback.chargebackAmount
+        ? formatMoney(amount, chargeback.currency)
+        : copy.SUBMIT.AMOUNT_PARTIAL(
+            formatMoney(amount, chargeback.currency),
+            formatMoney(chargeback.chargebackAmount, chargeback.currency),
+          ),
+  });
+  return {
+    sentAt: event.occurredAt,
+    rows,
+    documents: (event.documentIds ?? [])
+      .map((id) => chargeback.documents.find((document) => document.id === id))
+      .filter((document): document is ChargebackDocument => document !== undefined),
+    note: event.description,
+  };
+}
+
+export interface IncomingNote {
+  readonly from: 'worldpay' | 'cardholder-bank';
+  readonly text: string;
+}
+
+export function getIncomingNote(
+  chargeback: ChargebackCase,
+  mode: RespondMode,
+): IncomingNote | undefined {
+  if (mode === 'resubmit' && chargeback.worldpayNote) {
+    return { from: 'worldpay', text: chargeback.worldpayNote };
+  }
+  if (mode === 'pre-arbitration' && chargeback.issuerNote) {
+    return { from: 'cardholder-bank', text: chargeback.issuerNote };
+  }
+  return undefined;
 }
 
 export function getInitialStep(
@@ -155,7 +249,7 @@ export function getInitialStep(
   full: number,
   hasDraft: boolean,
 ): RespondStep {
-  if (mode === 'resubmit') {
+  if (mode === 'resubmit' || (mode === 'pre-arbitration' && !hasDraft)) {
     return 'evidence';
   }
   if (!hasDraft) {

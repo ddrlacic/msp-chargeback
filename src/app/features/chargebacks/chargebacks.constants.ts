@@ -288,8 +288,11 @@ export const CHARGEBACKS_CONSTANTS = {
       DRAFT_CONTENT: (amount: string, documents: number) =>
         `Challenging ${amount} with ${countLabel(documents, 'document', 'documents')}`,
       WORLDPAY_NOTE: 'Note from Worldpay',
+      BANK_NOTE: 'Note from the cardholder’s bank',
       PARTIALLY_WON: (returned: string, challenged: string) =>
         `${returned} of ${challenged} is returned to your account`,
+      ARBITRATION_FEES: (fees: string) => `If you lose, ${fees}`,
+      LOST_FEES: (fees: string) => `You also pay ${fees} in arbitration fees`,
     },
     OPTIONS: {
       LABEL: 'Your options',
@@ -297,8 +300,10 @@ export const CHARGEBACKS_CONSTANTS = {
         `${amount} stays charged and the case closes. You cannot undo this.`,
       CHALLENGE_DESCRIPTION:
         'Send evidence that the payment was valid. Worldpay reviews it and passes it on to the cardholder’s bank.',
-      ARBITRATION_DESCRIPTION: (fees: string) =>
-        `The card network makes the final decision. If you lose, ${fees}.`,
+      PRE_ARBITRATION_DESCRIPTION:
+        'Send new evidence for the cardholder’s bank to review. If they still disagree, you can take the case to arbitration.',
+      ARBITRATION_DESCRIPTION: (network: string, fees: string) =>
+        `${network} makes the final decision. If you lose, ${fees}.`,
       FEES_UP_TO: (amount: string) => `fees of up to ${amount} apply`,
       FEES_FROM: (amount: string) => `fees of ${amount} or more apply`,
       FEES: 'fees apply',
@@ -328,6 +333,7 @@ export const CHARGEBACKS_CONSTANTS = {
       CHALLENGED: 'Challenged',
       DEBITED: 'Debited',
       CREDITED: 'Credited back',
+      FEES: 'Arbitration fees',
       NET: 'Net',
       NET_SO_FAR: 'Net so far',
       NET_HINT: 'Final when the case closes',
@@ -383,6 +389,7 @@ export const CHARGEBACKS_CONSTANTS = {
       MONEY: {
         DEBITED: (amount: string) => `${amount} debited`,
         CREDITED: (amount: string) => `${amount} credited back`,
+        FEES: (amount: string) => `${amount} arbitration fees debited`,
       },
       DOCUMENTS: 'Documents sent',
       PREVIEW: (name: string) => `Preview ${name}`,
@@ -395,8 +402,30 @@ export const CHARGEBACKS_CONSTANTS = {
     CANCEL: 'Cancel',
     CONFIRM: 'Accept chargeback',
   },
+  ARBITRATION_DIALOG: {
+    TITLE: 'Request arbitration',
+    DESCRIPTION: (network: string) => `${network} reviews both sides and makes a final decision`,
+    WIN: 'If you win',
+    WIN_VALUE: (amount: string) => `${amount} is returned to your account`,
+    LOSE: 'If you lose',
+    LOSE_VALUE: (amount: string, fees: string) =>
+      `${amount} stays charged and you pay ${fees} in fees`,
+    LOSE_VALUE_UNKNOWN_FEES: (amount: string) =>
+      `${amount} stays charged and you pay the arbitration fees`,
+    FEES_UP_TO: (amount: string) => `up to ${amount}`,
+    FEE_BREAKDOWN: (filing: string, review: string) =>
+      `${filing} filing fee and ${review} review fee`,
+    FEE_BREAKDOWN_WITH_ERRORS: (filing: string, review: string, perError: string) =>
+      `${filing} filing fee and ${review} review fee, plus ${perError} for each technical error`,
+    CANCEL: 'Cancel',
+    CONFIRM: 'Request arbitration',
+  },
   RESPOND: {
-    TITLE: { challenge: 'Challenge chargeback', resubmit: 'Fix and resubmit' },
+    TITLE: {
+      challenge: 'Challenge chargeback',
+      resubmit: 'Fix and resubmit',
+      'pre-arbitration': 'Respond to pre-arbitration',
+    },
     STEPS_LABEL: 'Progress',
     STEP_OF: (step: number, total: number) => `Step ${step} of ${total}`,
     STEP_DONE: 'Completed',
@@ -416,9 +445,13 @@ export const CHARGEBACKS_CONSTANTS = {
     NOTE: {
       TITLE: 'Note from Worldpay',
       DEADLINE: (date: string) => `Resubmit by ${date}, or the chargeback stands`,
+      BANK_TITLE: 'Note from the cardholder’s bank',
+      BANK_DEADLINE: (date: string) => `Respond by ${date}, or the chargeback stands`,
     },
     REVIEW: {
       DESCRIPTION: 'Check the dispute before you respond',
+      PRE_ARBITRATION_DESCRIPTION:
+        'The cardholder’s bank reviewed your response and still disputes the payment',
       DEADLINE: (date: string) => `Respond by ${date}, or the chargeback stands`,
       AMOUNT: 'Disputed amount',
       CLAIM: 'Cardholder’s claim',
@@ -435,6 +468,7 @@ export const CHARGEBACKS_CONSTANTS = {
       ERROR: 'Choose a reason',
       AMOUNT_LEGEND: 'Amount to challenge',
       AMOUNT_FULL: (amount: string) => `Full amount (${amount})`,
+      AMOUNT_SAME: (amount: string) => `Same amount as before (${amount})`,
       AMOUNT_PARTIAL: 'Smaller amount',
       AMOUNT_LABEL: 'Amount',
       AMOUNT_HINT: (max: string) => `Up to ${max}`,
@@ -443,6 +477,16 @@ export const CHARGEBACKS_CONSTANTS = {
     EVIDENCE: {
       DESCRIPTION:
         'Add documents that support your reason. Worldpay passes them on to the cardholder’s bank.',
+      PRE_ARBITRATION_DESCRIPTION:
+        'Add new documents that answer the challenge. The cardholder’s bank already has the ones you sent before.',
+      PREVIOUS: {
+        TITLE: 'Your previous response',
+        SENT: (date: string) => `Sent ${date}`,
+        REASON: 'Reason',
+        AMOUNT: 'Amount',
+        DOCUMENTS: 'Documents',
+        NOTE: 'Note',
+      },
       CHECKLIST: 'Documents to add',
       OTHER: 'Other documents',
       UPLOAD: 'Upload',
@@ -470,6 +514,8 @@ export const CHARGEBACKS_CONSTANTS = {
         `Worldpay reviews your response and passes it on to the cardholder’s bank. ${amount} is credited back to your account while they decide.`,
       NEXT_NO_CREDIT:
         'Worldpay reviews your response and passes it on to the cardholder’s bank. No money moves until they decide.',
+      NEXT_PRE_ARBITRATION:
+        'Worldpay reviews your response and passes it on to the cardholder’s bank. No money moves until they decide. If they still disagree, you can take the case to arbitration.',
       SCANNING: 'Scanning documents. You can submit when it finishes',
       BLOCKED: 'Remove documents that did not upload to submit',
     },

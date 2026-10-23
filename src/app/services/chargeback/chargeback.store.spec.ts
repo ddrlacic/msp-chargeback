@@ -12,7 +12,7 @@ describe('ChargebackStore', () => {
   });
 
   it('lists the fake cases', () => {
-    expect(store.count()).toBe(17);
+    expect(store.count()).toBe(20);
   });
 
   it('gets a case by ID', () => {
@@ -113,6 +113,94 @@ describe('ChargebackStore', () => {
     expect(chargeback?.status).toBe('response-submitted');
     expect(chargeback?.amountCredited).toBe(0);
     expect(chargeback?.timeline.at(-1)?.amountChange).toBe(undefined);
+  });
+
+  it('keeps a pre-arbitration open when its draft is saved', () => {
+    store.saveDraft('CB-260815', { documentIds: [] });
+
+    expect(store.getById('CB-260815')?.status).toBe('pre-arbitration-response-required');
+    expect(store.getById('CB-260815')?.draft?.documentIds).toEqual([]);
+  });
+
+  it('sends a pre-arbitration response for review without moving money', () => {
+    store.setStatus('CB-260843', 'pre-arbitration-response-required');
+    store.submitResponse('CB-260843', {
+      reason: 'proof-of-purchase',
+      challengedAmount: 129.99,
+      documentIds: ['new-doc'],
+    });
+    const chargeback = store.getById('CB-260843');
+
+    expect(chargeback?.status).toBe('under-review');
+    expect(chargeback?.cycle).toBe('pre-arbitration');
+    expect(chargeback?.amountCredited).toBe(129.99);
+    expect(chargeback?.timeline.at(-1)).toEqual({
+      id: 'CB-260843-event-4',
+      occurredAt: new Date(2026, 9, 22, 12).toISOString(),
+      cycle: 'pre-arbitration',
+      actor: 'merchant',
+      title: 'Pre-arbitration response sent to Worldpay',
+      worldpayTerm: 'Represent',
+      description: undefined,
+      amountChange: undefined,
+      documentIds: ['new-doc'],
+    });
+  });
+
+  it('takes a case to arbitration', () => {
+    store.requestArbitration('CB-260790');
+    const chargeback = store.getById('CB-260790');
+
+    expect(chargeback?.status).toBe('arbitration');
+    expect(chargeback?.cycle).toBe('arbitration');
+    expect(chargeback?.allowedActions).toEqual([]);
+    expect(chargeback?.replyByDate).toBe(undefined);
+    expect(chargeback?.timeline.at(-1)?.title).toBe('You took the case to arbitration');
+    expect(chargeback?.timeline.at(-1)?.worldpayTerm).toBe('Request arbitration');
+  });
+
+  describe('arbitration rulings', () => {
+    beforeEach(() => store.requestArbitration('CB-260790'));
+
+    it('returns the amount at stake when the merchant wins', () => {
+      store.recordArbitrationRuling('CB-260790', 'won');
+      const chargeback = store.getById('CB-260790');
+
+      expect(chargeback?.status).toBe('won');
+      expect(chargeback?.amountCredited).toBe(624);
+      expect(chargeback?.timeline.at(-1)?.worldpayTerm).toBe('Arbitration won');
+      expect(chargeback?.timeline.at(-1)?.amountChange).toBe(312);
+    });
+
+    it('returns part of it on a split, never more than is at stake', () => {
+      store.recordArbitrationRuling('CB-260790', 'partially-won', 120);
+
+      expect(store.getById('CB-260790')?.status).toBe('partially-won');
+      expect(store.getById('CB-260790')?.amountCredited).toBe(432);
+
+      store.reset();
+      store.recordArbitrationRuling('CB-260790', 'partially-won', 900);
+
+      expect(store.getById('CB-260790')?.amountCredited).toBe(624);
+    });
+
+    it('charges the network’s fees when the merchant loses', () => {
+      store.recordArbitrationRuling('CB-260790', 'lost');
+      const chargeback = store.getById('CB-260790');
+
+      expect(chargeback?.status).toBe('lost');
+      expect(chargeback?.amountCredited).toBe(312);
+      expect(chargeback?.arbitrationFees).toBe(400);
+      expect(chargeback?.timeline.at(-1)?.title).toBe('Resolved in the cardholder’s favor');
+      expect(chargeback?.timeline.at(-1)?.arbitrationFees).toBe(400);
+      expect(chargeback?.timeline.at(-1)?.amountChange).toBe(undefined);
+    });
+
+    it('charges no fee when the network’s fees are unknown', () => {
+      store.recordArbitrationRuling('CB-260540', 'lost');
+
+      expect(store.getById('CB-260540')?.arbitrationFees).toBe(undefined);
+    });
   });
 
   it('sets any status and updates the allowed actions', () => {

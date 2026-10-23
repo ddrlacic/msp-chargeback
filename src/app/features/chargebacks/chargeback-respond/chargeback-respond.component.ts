@@ -72,20 +72,23 @@ export class ChargebackRespondComponent implements OnInit {
     RESPOND_STEPS.filter((step) => this.flow.canOpen(step)),
   );
 
-  protected readonly worldpayNote = computed(() => {
-    const chargeback = this.chargeback();
-    if (this.flow.mode() !== 'resubmit' || !chargeback?.worldpayNote) {
+  protected readonly note = computed(() => {
+    const note = this.flow.incomingNote();
+    if (!note) {
       return undefined;
     }
+    const fromBank = note.from === 'cardholder-bank';
+    const date = this.chargeback()?.replyByDate;
     return {
-      text: chargeback.worldpayNote,
-      deadline: chargeback.replyByDate
-        ? this.copy.NOTE.DEADLINE(formatDate(chargeback.replyByDate))
+      title: fromBank ? this.copy.NOTE.BANK_TITLE : this.copy.NOTE.TITLE,
+      text: note.text,
+      deadline: date
+        ? (fromBank ? this.copy.NOTE.BANK_DEADLINE : this.copy.NOTE.DEADLINE)(formatDate(date))
         : undefined,
     };
   });
 
-  protected readonly canSaveDraft = computed(() => this.flow.mode() === 'challenge');
+  protected readonly canSaveDraft = computed(() => this.flow.mode() !== 'resubmit');
 
   ngOnInit(): void {
     this.flow.init(this.caseId());

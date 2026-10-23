@@ -6,11 +6,15 @@ import {
   getAmountError,
   getChallengedAmount,
   getEvidenceRows,
+  getIncomingNote,
   getInitialStep,
+  getMaxChallengeAmount,
+  getPreviousResponse,
   getRespondMode,
   getRespondTitle,
   getReviewRows,
   hasBlockedDocuments,
+  hasFormChanged,
   hasScanningDocuments,
   isValidChallengeAmount,
   parseAmount,
@@ -37,16 +41,29 @@ describe('chargeback respond utils', () => {
       expect(getRespondMode(find('CB-260954'))).toBe('resubmit');
     });
 
-    it('has no flow for a case that is not open for a challenge', () => {
+    it('responds to a pre-arbitration', () => {
+      expect(getRespondMode(find('CB-260815'))).toBe('pre-arbitration');
+    });
+
+    it('has no flow for a case that is not open for a response', () => {
       expect(getRespondMode(find('CB-260921'))).toBe(undefined);
-      expect(getRespondMode(find('CB-260815'))).toBe(undefined);
+      expect(getRespondMode(find('CB-260843'))).toBe(undefined);
+      expect(getRespondMode(find('CB-260790'))).toBe(undefined);
     });
   });
 
   it('titles the page by mode', () => {
     expect(getRespondTitle(find('CB-261018'))).toBe('Challenge chargeback');
     expect(getRespondTitle(find('CB-260954'))).toBe('Fix and resubmit');
+    expect(getRespondTitle(find('CB-260815'))).toBe('Respond to pre-arbitration');
     expect(getRespondTitle(undefined)).toBe('Challenge chargeback');
+  });
+
+  it('limits a pre-arbitration response to the amount challenged before', () => {
+    const preArbitration = find('CB-260815');
+
+    expect(getMaxChallengeAmount(find('CB-261018'))).toBe(86.4);
+    expect(getMaxChallengeAmount({ ...preArbitration, challengedAmount: 120 })).toBe(120);
   });
 
   describe('parseAmount', () => {
@@ -129,6 +146,91 @@ describe('chargeback respond utils', () => {
         note: '',
       });
     });
+
+    it('keeps the reason but asks for new documents in a pre-arbitration', () => {
+      expect(createInitialState(find('CB-260815'))).toEqual({
+        reason: 'proof-of-purchase',
+        amountChoice: 'full',
+        amountText: '',
+        documentIds: [],
+        note: '',
+      });
+    });
+  });
+
+  describe('hasFormChanged', () => {
+    const initial = {
+      reason: 'proof-of-purchase',
+      amountChoice: 'full',
+      amountText: '',
+      documentIds: ['a'],
+      note: '',
+    } as const;
+
+    it('ignores what was already there', () => {
+      expect(hasFormChanged({ ...initial, note: '  ' }, initial)).toBe(false);
+      expect(hasFormChanged({ ...initial, amountChoice: 'partial' }, initial)).toBe(false);
+    });
+
+    it('notices a new reason, amount, note or document', () => {
+      expect(hasFormChanged({ ...initial, reason: 'credit-issued' }, initial)).toBe(true);
+      expect(
+        hasFormChanged({ ...initial, amountChoice: 'partial', amountText: '40' }, initial),
+      ).toBe(true);
+      expect(hasFormChanged({ ...initial, note: 'More' }, initial)).toBe(true);
+      expect(hasFormChanged({ ...initial, documentIds: ['a', 'b'] }, initial)).toBe(true);
+      expect(hasFormChanged({ ...initial, documentIds: ['b'] }, initial)).toBe(true);
+    });
+  });
+
+  describe('getPreviousResponse', () => {
+    it('describes the response the cardholder’s bank challenged', () => {
+      const response = getPreviousResponse(find('CB-260815'));
+
+      expect(response?.sentAt).toBe(find('CB-260815').timeline[1].occurredAt);
+      expect(response?.rows.map((row) => [row.label, row.value])).toEqual([
+        ['Reason', 'Proof of purchase or delivery'],
+        ['Amount', '$176.50'],
+      ]);
+      expect(response?.documents.map((document) => document.name)).toEqual(['order-57102.pdf']);
+      expect(response?.note).toBe(undefined);
+    });
+
+    it('shows a smaller amount against the disputed amount', () => {
+      const response = getPreviousResponse({ ...find('CB-260815'), challengedAmount: 100 });
+
+      expect(response?.rows.find((row) => row.key === 'amount')?.value).toBe(
+        '$100.00 of $176.50',
+      );
+    });
+
+    it('has nothing to show before a response was sent', () => {
+      expect(getPreviousResponse(find('CB-261018'))).toBe(undefined);
+    });
+  });
+
+  describe('getIncomingNote', () => {
+    it('shows Worldpay’s note when resubmitting', () => {
+      expect(getIncomingNote(find('CB-260954'), 'resubmit')).toEqual({
+        from: 'worldpay',
+        text: 'The delivery photo is hard to read. Upload a clearer copy that shows the delivery address and time.',
+      });
+    });
+
+    it('shows the bank’s note when responding to a pre-arbitration', () => {
+      expect(getIncomingNote(find('CB-260815'), 'pre-arbitration')).toEqual({
+        from: 'cardholder-bank',
+        text: 'The cardholder says the food arrived cold and two items were missing. The invoice shows what was ordered, not what was delivered.',
+      });
+    });
+
+    it('has no note otherwise', () => {
+      expect(getIncomingNote(find('CB-261018'), 'challenge')).toBe(undefined);
+      expect(getIncomingNote(find('CB-260815'), 'challenge')).toBe(undefined);
+      expect(
+        getIncomingNote({ ...find('CB-260815'), issuerNote: undefined }, 'pre-arbitration'),
+      ).toBe(undefined);
+    });
   });
 
   describe('getInitialStep', () => {
@@ -140,6 +242,15 @@ describe('chargeback respond utils', () => {
 
     it('starts a resubmission at the evidence', () => {
       expect(getInitialStep('resubmit', empty, 100, false)).toBe('evidence');
+    });
+
+    it('starts a pre-arbitration response at the evidence, and resumes its draft', () => {
+      const previous = { ...empty, reason: 'proof-of-purchase' } as const;
+
+      expect(getInitialStep('pre-arbitration', previous, 100, false)).toBe('evidence');
+      expect(
+        getInitialStep('pre-arbitration', { ...previous, documentIds: ['a'] }, 100, true),
+      ).toBe('submit');
     });
 
     it('resumes a draft at the first step that is not done', () => {

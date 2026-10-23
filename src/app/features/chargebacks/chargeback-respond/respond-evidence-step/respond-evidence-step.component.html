@@ -1,4 +1,77 @@
-<p class="text-pretty text-ink-strong">{{ copy.DESCRIPTION }}</p>
+<div>
+  @if (deadline(); as deadline) {
+    <p class="text-pretty font-semibold text-ink tabular-nums" data-deadline>{{ deadline }}</p>
+  }
+  <p class="text-pretty text-ink-strong">{{ description() }}</p>
+</div>
+
+@if (previous(); as response) {
+  <section
+    class="flex flex-col gap-3 rounded-md bg-canvas p-4"
+    data-previous-response
+    [attr.aria-labelledby]="previousTitleId"
+  >
+    <div class="flex flex-wrap items-baseline justify-between gap-x-4">
+      <h3 class="font-semibold text-ink" [id]="previousTitleId">{{ copy.PREVIOUS.TITLE }}</h3>
+      <p class="text-small text-ink-muted tabular-nums">{{ response.sent }}</p>
+    </div>
+    <dl class="grid gap-x-6 gap-y-3 @md:grid-cols-2">
+      @for (row of response.rows; track row.key) {
+        <div class="min-w-0" [attr.data-row]="row.key">
+          <dt class="text-small text-ink-muted">{{ row.label }}</dt>
+          <dd class="text-pretty break-words text-ink tabular-nums">{{ row.value }}</dd>
+        </div>
+      }
+      @if (response.files.length) {
+        <div class="min-w-0 @md:col-span-2" data-row="documents">
+          <dt class="text-small text-ink-muted">{{ copy.PREVIOUS.DOCUMENTS }}</dt>
+          <dd>
+            <ul class="flex flex-col">
+              @for (file of response.files; track file.document.id) {
+                <li class="flex min-w-0 items-center gap-2">
+                  <span class="shrink-0 text-ink-subtle" aria-hidden="true">
+                    <lucide-icon
+                      class="block size-4"
+                      [name]="file.icon"
+                      [size]="16"
+                      [strokeWidth]="1.5"
+                      [absoluteStrokeWidth]="true"
+                    />
+                  </span>
+                  @if (file.canOpen) {
+                    <button
+                      type="button"
+                      class="-ml-1 inline-flex h-8 min-w-0 items-center rounded-md px-1 text-left text-ink transition-[background-color] duration-200 ease-in-out hover:bg-hover active:bg-pressed pointer-coarse:h-11"
+                      [attr.aria-label]="copy.PREVIEW(file.document.name)"
+                      (click)="flow.preview(file.document)"
+                    >
+                      <span class="truncate" [title]="file.document.name">{{
+                        file.document.name
+                      }}</span>
+                    </button>
+                  } @else {
+                    <span class="min-w-0 truncate text-ink-muted" [title]="file.document.name">{{
+                      file.document.name
+                    }}</span>
+                  }
+                  <span class="shrink-0 text-small text-ink-muted tabular-nums">{{
+                    file.details
+                  }}</span>
+                </li>
+              }
+            </ul>
+          </dd>
+        </div>
+      }
+      @if (response.note; as note) {
+        <div class="min-w-0 @md:col-span-2" data-row="note">
+          <dt class="text-small text-ink-muted">{{ copy.PREVIOUS.NOTE }}</dt>
+          <dd class="text-pretty break-words text-ink">{{ note }}</dd>
+        </div>
+      }
+    </dl>
+  </section>
+}
 
 <section class="flex flex-col gap-2">
   <h3 class="font-semibold text-ink" [id]="checklistId">{{ copy.CHECKLIST }}</h3>

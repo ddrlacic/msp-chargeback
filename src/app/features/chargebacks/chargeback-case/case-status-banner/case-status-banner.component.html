@@ -54,8 +54,8 @@
       class="flex flex-col gap-4 rounded-b-md border border-t-0 border-overlay-10 bg-white py-4 pr-4 pl-12"
     >
       <figure>
-        <figcaption class="font-semibold text-ink">{{ copy.BANNER.WORLDPAY_NOTE }}</figcaption>
-        <blockquote class="text-pretty text-ink">{{ note }}</blockquote>
+        <figcaption class="font-semibold text-ink">{{ note.title }}</figcaption>
+        <blockquote class="text-pretty text-ink">{{ note.text }}</blockquote>
       </figure>
       <ng-container [ngTemplateOutlet]="actions" />
     </div>

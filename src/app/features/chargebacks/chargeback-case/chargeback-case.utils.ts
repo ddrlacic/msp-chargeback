@@ -1,18 +1,26 @@
 import {
-  CardNetwork,
   ChargebackAction,
   ChargebackCase,
   ChargebackColorState,
   ChargebackStatus,
 } from '../../../services/chargeback/chargeback.types';
 import {
+  getAmountAtStake,
+  getArbitrationFeeSchedule,
+  getArbitrationFeeTotal,
+  getNetAmount,
+  getOutstandingAmount,
   getResponseWindowDays,
   getStatusState,
   isNeedsAction,
   roundMoney,
 } from '../../../services/chargeback/chargeback.utils';
 import { formatDate, formatDateAtTime } from '../../../shared/utils/date.utils';
-import { formatMoney, formatSignedMoney } from '../../../shared/utils/money.utils';
+import {
+  formatMoney,
+  formatSignedMoney,
+  formatWholeMoney,
+} from '../../../shared/utils/money.utils';
 import {
   CARD_NETWORK_LABELS,
   CARD_NETWORK_LOGOS,
@@ -22,13 +30,18 @@ import {
 } from '../chargebacks.constants';
 
 const copy = CHARGEBACKS_CONSTANTS.CASE;
+const dialogCopy = CHARGEBACKS_CONSTANTS.ARBITRATION_DIALOG;
 
-const OPTION_STATUSES: readonly ChargebackStatus[] = ['action-required', 'decision-needed'];
+const OPTION_STATUSES: readonly ChargebackStatus[] = [
+  'action-required',
+  'pre-arbitration-response-required',
+  'decision-needed',
+];
 
-const ARBITRATION_FEES: Partial<Record<CardNetwork, string>> = {
-  visa: copy.OPTIONS.FEES_UP_TO('$500'),
-  mastercard: copy.OPTIONS.FEES_FROM('$400'),
-};
+const BANK_NOTE_STATUSES: readonly ChargebackStatus[] = [
+  'pre-arbitration-response-required',
+  'decision-needed',
+];
 
 export interface CaseAction {
   readonly action: ChargebackAction;
@@ -45,12 +58,17 @@ export interface CaseDraftSummary {
   readonly content: string;
 }
 
+export interface CaseBannerNote {
+  readonly title: string;
+  readonly text: string;
+}
+
 export interface CaseBanner {
   readonly state: ChargebackColorState;
   readonly title: string;
   readonly detail?: string;
   readonly deadline?: string;
-  readonly note?: string;
+  readonly note?: CaseBannerNote;
   readonly draft?: CaseDraftSummary;
   readonly actions: readonly CaseAction[];
   readonly options: readonly CaseOption[];
@@ -71,8 +89,20 @@ export interface CaseDeadline {
   readonly windowDays?: number;
 }
 
+export interface ArbitrationOutcome {
+  readonly key: 'win' | 'lose';
+  readonly label: string;
+  readonly value: string;
+  readonly detail?: string;
+}
+
+export interface ArbitrationDialogView {
+  readonly description: string;
+  readonly outcomes: readonly ArbitrationOutcome[];
+}
+
 export interface MoneyRow {
-  readonly key: 'disputed' | 'challenged' | 'debited' | 'credited' | 'net';
+  readonly key: 'disputed' | 'challenged' | 'debited' | 'credited' | 'fees' | 'net';
   readonly label: string;
   readonly value: string;
 }
@@ -91,10 +121,6 @@ export interface DetailRow {
   readonly logo?: string;
 }
 
-export function getOutstandingAmount(chargeback: ChargebackCase): number {
-  return Math.max(0, roundMoney(chargeback.amountDebited - chargeback.amountCredited));
-}
-
 export function getCaseHeader(chargeback: ChargebackCase): CaseHeader {
   const network = CARD_NETWORK_LABELS[chargeback.network];
   return {
@@ -109,7 +135,7 @@ export function getCaseHeader(chargeback: ChargebackCase): CaseHeader {
 
 export function getCaseBanner(chargeback: ChargebackCase): CaseBanner {
   const actions = getCaseActions(chargeback);
-  const withOptions = OPTION_STATUSES.includes(chargeback.status);
+  const withOptions = OPTION_STATUSES.includes(chargeback.status) && !chargeback.draft;
   return {
     state: getStatusState(chargeback.status),
     title: CHARGEBACK_STATUS_COPY[chargeback.status].message.replace(
@@ -118,7 +144,7 @@ export function getCaseBanner(chargeback: ChargebackCase): CaseBanner {
     ),
     detail: getBannerDetail(chargeback),
     deadline: getDeadline(chargeback),
-    note: chargeback.status === 'returned-by-worldpay' ? chargeback.worldpayNote : undefined,
+    note: getBannerNote(chargeback),
     draft: getDraftSummary(chargeback),
     actions: withOptions ? [] : actions,
     options: withOptions
@@ -144,11 +170,22 @@ export function getCaseDeadline(chargeback: ChargebackCase): CaseDeadline | unde
   };
 }
 
+export function getArbitrationDialog(chargeback: ChargebackCase): ArbitrationDialogView {
+  const atStake = formatMoney(getAmountAtStake(chargeback), chargeback.currency);
+  return {
+    description: dialogCopy.DESCRIPTION(CARD_NETWORK_LABELS[chargeback.network]),
+    outcomes: [
+      { key: 'win', label: dialogCopy.WIN, value: dialogCopy.WIN_VALUE(atStake) },
+      getLoseOutcome(chargeback, atStake),
+    ],
+  };
+}
+
 export function getMoneySummary(chargeback: ChargebackCase): MoneySummaryView {
   const currency = chargeback.currency;
   const open = isOpen(chargeback.status);
   const challenged = chargeback.challengedAmount;
-  const net = roundMoney(chargeback.amountCredited - chargeback.amountDebited);
+  const net = getNetAmount(chargeback);
   const rows: MoneyRow[] = [
     {
       key: 'disputed',
@@ -174,6 +211,15 @@ export function getMoneySummary(chargeback: ChargebackCase): MoneySummaryView {
       label: copy.MONEY.CREDITED,
       value: formatMoney(chargeback.amountCredited, currency),
     },
+  );
+  if (chargeback.arbitrationFees) {
+    rows.push({
+      key: 'fees',
+      label: copy.MONEY.FEES,
+      value: formatSignedMoney(-chargeback.arbitrationFees, currency),
+    });
+  }
+  rows.push(
     {
       key: 'net',
       label: open ? copy.MONEY.NET_SO_FAR : copy.MONEY.NET,
@@ -241,27 +287,84 @@ function getOptionDescription(chargeback: ChargebackCase, action: ChargebackActi
       );
     case 'request-arbitration':
       return copy.OPTIONS.ARBITRATION_DESCRIPTION(
-        ARBITRATION_FEES[chargeback.network] ?? copy.OPTIONS.FEES,
+        CARD_NETWORK_LABELS[chargeback.network],
+        getFeesPhrase(chargeback),
       );
+    case 'respond-pre-arbitration':
+      return copy.OPTIONS.PRE_ARBITRATION_DESCRIPTION;
     default:
       return copy.OPTIONS.CHALLENGE_DESCRIPTION;
   }
 }
 
+function getFeesPhrase(chargeback: ChargebackCase): string {
+  const schedule = getArbitrationFeeSchedule(chargeback.network);
+  if (!schedule) {
+    return copy.OPTIONS.FEES;
+  }
+  const total = formatWholeMoney(getArbitrationFeeTotal(schedule), chargeback.currency);
+  return schedule.upTo ? copy.OPTIONS.FEES_UP_TO(total) : copy.OPTIONS.FEES_FROM(total);
+}
+
+function getLoseOutcome(chargeback: ChargebackCase, atStake: string): ArbitrationOutcome {
+  const schedule = getArbitrationFeeSchedule(chargeback.network);
+  if (!schedule) {
+    return { key: 'lose', label: dialogCopy.LOSE, value: dialogCopy.LOSE_VALUE_UNKNOWN_FEES(atStake) };
+  }
+  const whole = (amount: number) => formatWholeMoney(amount, chargeback.currency);
+  const total = whole(getArbitrationFeeTotal(schedule));
+  return {
+    key: 'lose',
+    label: dialogCopy.LOSE,
+    value: dialogCopy.LOSE_VALUE(atStake, schedule.upTo ? dialogCopy.FEES_UP_TO(total) : total),
+    detail:
+      schedule.perTechnicalError === undefined
+        ? dialogCopy.FEE_BREAKDOWN(whole(schedule.filing), whole(schedule.review))
+        : dialogCopy.FEE_BREAKDOWN_WITH_ERRORS(
+            whole(schedule.filing),
+            whole(schedule.review),
+            whole(schedule.perTechnicalError),
+          ),
+  };
+}
+
+function getReturnedAmount(chargeback: ChargebackCase): number {
+  return Math.max(0, roundMoney(chargeback.chargebackAmount - getOutstandingAmount(chargeback)));
+}
+
 function getMessageAmount(chargeback: ChargebackCase): number {
   return chargeback.status === 'won'
-    ? (chargeback.challengedAmount ?? chargeback.chargebackAmount)
+    ? getReturnedAmount(chargeback)
     : getOutstandingAmount(chargeback);
 }
 
-function getBannerDetail(chargeback: ChargebackCase): string | undefined {
-  if (chargeback.status !== 'partially-won') {
-    return undefined;
+function getBannerNote(chargeback: ChargebackCase): CaseBannerNote | undefined {
+  if (chargeback.status === 'returned-by-worldpay' && chargeback.worldpayNote) {
+    return { title: copy.BANNER.WORLDPAY_NOTE, text: chargeback.worldpayNote };
   }
-  return copy.BANNER.PARTIALLY_WON(
-    formatMoney(chargeback.amountCredited, chargeback.currency),
-    formatMoney(chargeback.challengedAmount ?? chargeback.chargebackAmount, chargeback.currency),
-  );
+  if (BANK_NOTE_STATUSES.includes(chargeback.status) && chargeback.issuerNote) {
+    return { title: copy.BANNER.BANK_NOTE, text: chargeback.issuerNote };
+  }
+  return undefined;
+}
+
+function getBannerDetail(chargeback: ChargebackCase): string | undefined {
+  const currency = chargeback.currency;
+  switch (chargeback.status) {
+    case 'partially-won':
+      return copy.BANNER.PARTIALLY_WON(
+        formatMoney(getReturnedAmount(chargeback), currency),
+        formatMoney(chargeback.challengedAmount ?? chargeback.chargebackAmount, currency),
+      );
+    case 'arbitration':
+      return copy.BANNER.ARBITRATION_FEES(getFeesPhrase(chargeback));
+    case 'lost':
+      return chargeback.arbitrationFees
+        ? copy.BANNER.LOST_FEES(formatMoney(chargeback.arbitrationFees, currency))
+        : undefined;
+    default:
+      return undefined;
+  }
 }
 
 function getDeadline(chargeback: ChargebackCase): string | undefined {
@@ -276,13 +379,16 @@ function getDeadline(chargeback: ChargebackCase): string | undefined {
 
 function getDraftSummary(chargeback: ChargebackCase): CaseDraftSummary | undefined {
   const draft = chargeback.draft;
-  if (chargeback.status !== 'evidence-required' || !draft) {
+  if (!draft || !isNeedsAction(chargeback.status)) {
     return undefined;
   }
   return {
     saved: copy.BANNER.DRAFT_SAVED(formatDateAtTime(draft.savedAt)),
     content: copy.BANNER.DRAFT_CONTENT(
-      formatMoney(draft.challengedAmount ?? chargeback.chargebackAmount, chargeback.currency),
+      formatMoney(
+        draft.challengedAmount ?? chargeback.challengedAmount ?? chargeback.chargebackAmount,
+        chargeback.currency,
+      ),
       draft.documentIds.length,
     ),
   };

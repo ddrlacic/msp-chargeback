@@ -56,13 +56,19 @@ export class RespondReasonStepComponent {
     description: CHALLENGE_REASON_COPY[reason].description,
   }));
 
-  protected readonly amountOptions = computed<readonly RadioOption[]>(() => [
-    {
-      value: 'full',
-      label: this.copy.AMOUNT_FULL(formatMoney(this.flow.fullAmount(), this.flow.currency())),
-    },
-    { value: 'partial', label: this.copy.AMOUNT_PARTIAL },
-  ]);
+  protected readonly amountOptions = computed<readonly RadioOption[]>(() => {
+    const amount = formatMoney(this.flow.fullAmount(), this.flow.currency());
+    return [
+      {
+        value: 'full',
+        label:
+          this.flow.mode() === 'pre-arbitration'
+            ? this.copy.AMOUNT_SAME(amount)
+            : this.copy.AMOUNT_FULL(amount),
+      },
+      { value: 'partial', label: this.copy.AMOUNT_PARTIAL },
+    ];
+  });
 
   protected readonly maxAmount = computed(() =>
     formatMoney(this.flow.fullAmount(), this.flow.currency()),

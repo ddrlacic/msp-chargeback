@@ -228,6 +228,45 @@ describe('ChargebackRespondFlow', () => {
     });
   });
 
+  describe('responding to a pre-arbitration', () => {
+    beforeEach(() => flow.init('CB-260815'));
+
+    it('starts at the evidence step with the reason kept and no documents', () => {
+      expect(flow.mode()).toBe('pre-arbitration');
+      expect(flow.step()).toBe('evidence');
+      expect(flow.reason()).toBe('proof-of-purchase');
+      expect(flow.documents()).toEqual([]);
+      expect(flow.fullAmount()).toBe(176.5);
+    });
+
+    it('saves nothing when the merchant leaves without changes', () => {
+      TestBed.resetTestingModule();
+
+      expect(store.getById('CB-260815')?.draft).toBe(undefined);
+    });
+
+    it('saves a draft without changing the status once something is added', () => {
+      flow.note.set('The tracking shows it was delivered');
+
+      flow.saveAndExit();
+      const chargeback = store.getById('CB-260815');
+
+      expect(chargeback?.status).toBe('pre-arbitration-response-required');
+      expect(chargeback?.draft?.note).toBe('The tracking shows it was delivered');
+    });
+
+    it('sends the response for review', () => {
+      flow.upload({ type: 'delivery-proof', files: [file('tracking.pdf')] });
+      vi.advanceTimersByTime(DOCUMENT_SCAN_MS);
+
+      expect(flow.submit()).toBe(true);
+      expect(store.getById('CB-260815')?.status).toBe('under-review');
+      expect(store.getById('CB-260815')?.timeline.at(-1)?.title).toBe(
+        'Pre-arbitration response sent to Worldpay',
+      );
+    });
+  });
+
   describe('submitting', () => {
     beforeEach(() => flow.init('CB-261018'));
 

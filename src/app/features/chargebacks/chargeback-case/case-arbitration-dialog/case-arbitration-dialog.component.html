@@ -1,0 +1,37 @@
+<app-dialog
+  [open]="open()"
+  [title]="copy.TITLE"
+  [description]="view().description"
+  [width]="440"
+  (closed)="closed.emit()"
+>
+  <dl class="mt-4 flex flex-col divide-y divide-line rounded-md border border-line">
+    @for (outcome of view().outcomes; track outcome.key) {
+      <div class="p-3" [attr.data-outcome]="outcome.key">
+        <dt class="text-small text-ink-muted">{{ outcome.label }}</dt>
+        <dd class="text-pretty text-ink tabular-nums">{{ outcome.value }}</dd>
+        @if (outcome.detail; as detail) {
+          <dd class="text-small text-pretty text-ink-muted tabular-nums">{{ detail }}</dd>
+        }
+      </div>
+    }
+  </dl>
+  <button
+    type="button"
+    dialogActions
+    appButton="secondary"
+    data-action="cancel"
+    (click)="closed.emit()"
+  >
+    {{ copy.CANCEL }}
+  </button>
+  <button
+    type="button"
+    dialogActions
+    appButton="primary"
+    data-action="confirm"
+    (click)="confirmed.emit()"
+  >
+    {{ copy.CONFIRM }}
+  </button>
+</app-dialog>

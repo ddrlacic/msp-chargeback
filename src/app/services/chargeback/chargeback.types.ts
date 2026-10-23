@@ -69,8 +69,11 @@ export interface TimelineEvent {
   readonly worldpayTerm?: string;
   readonly description?: string;
   readonly amountChange?: number;
+  readonly arbitrationFees?: number;
   readonly documentIds?: readonly string[];
 }
+
+export type ArbitrationRuling = 'won' | 'partially-won' | 'lost';
 
 export const CHALLENGE_REASONS = [
   'credit-issued',
@@ -116,10 +119,12 @@ export interface ChargebackCase {
   readonly challengeNote?: string;
   readonly amountDebited: number;
   readonly amountCredited: number;
+  readonly arbitrationFees?: number;
   readonly documents: readonly ChargebackDocument[];
   readonly timeline: readonly TimelineEvent[];
   readonly draft?: ChallengeDraft;
   readonly worldpayNote?: string;
+  readonly issuerNote?: string;
 }
 
 export interface ChargebackMoneySummary {
@@ -128,5 +133,6 @@ export interface ChargebackMoneySummary {
   readonly challengedAmount: number;
   readonly amountDebited: number;
   readonly amountCredited: number;
+  readonly arbitrationFees: number;
   readonly netAmount: number;
 }

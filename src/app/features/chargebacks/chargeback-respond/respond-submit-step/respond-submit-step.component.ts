@@ -70,6 +70,9 @@ export class RespondSubmitStepComponent {
   );
 
   protected readonly next = computed(() => {
+    if (this.flow.mode() === 'pre-arbitration') {
+      return this.copy.NEXT_PRE_ARBITRATION;
+    }
     const credit = this.flow.chargeback()?.network !== 'visa';
     return credit
       ? this.copy.NEXT_CREDIT(formatMoney(this.flow.challengedAmount() ?? 0, this.flow.currency()))

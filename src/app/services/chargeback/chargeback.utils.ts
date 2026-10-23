@@ -51,6 +51,41 @@ const RESPONSE_WINDOW_DAYS: Record<ResponseStage, Partial<Record<CardNetwork, nu
   'arbitration-request': { visa: 7, mastercard: 35 },
 };
 
+export interface ArbitrationFeeSchedule {
+  readonly filing: number;
+  readonly review: number;
+  readonly upTo: boolean;
+  readonly perTechnicalError?: number;
+}
+
+const ARBITRATION_FEE_SCHEDULES: Partial<Record<CardNetwork, ArbitrationFeeSchedule>> = {
+  visa: { filing: 250, review: 250, upTo: true },
+  mastercard: { filing: 150, review: 250, upTo: false, perTechnicalError: 100 },
+};
+
+export function getArbitrationFeeSchedule(
+  network: CardNetwork,
+): ArbitrationFeeSchedule | undefined {
+  return ARBITRATION_FEE_SCHEDULES[network];
+}
+
+export function getArbitrationFeeTotal(schedule: ArbitrationFeeSchedule): number {
+  return schedule.filing + schedule.review;
+}
+
+export function getOutstandingAmount(
+  chargeback: Pick<ChargebackCase, 'amountDebited' | 'amountCredited'>,
+): number {
+  return Math.max(0, roundMoney(chargeback.amountDebited - chargeback.amountCredited));
+}
+
+export function getAmountAtStake(chargeback: ChargebackCase): number {
+  return Math.min(
+    getOutstandingAmount(chargeback),
+    chargeback.challengedAmount ?? chargeback.chargebackAmount,
+  );
+}
+
 export function getStatusState(status: ChargebackStatus): ChargebackColorState {
   return STATUS_STATES[status];
 }
@@ -77,8 +112,15 @@ export function getMoneySummary(chargeback: ChargebackCase): ChargebackMoneySumm
     challengedAmount: chargeback.challengedAmount ?? chargeback.chargebackAmount,
     amountDebited: chargeback.amountDebited,
     amountCredited: chargeback.amountCredited,
-    netAmount: roundMoney(chargeback.amountCredited - chargeback.amountDebited),
+    arbitrationFees: chargeback.arbitrationFees ?? 0,
+    netAmount: getNetAmount(chargeback),
   };
+}
+
+export function getNetAmount(chargeback: ChargebackCase): number {
+  return roundMoney(
+    chargeback.amountCredited - chargeback.amountDebited - (chargeback.arbitrationFees ?? 0),
+  );
 }
 
 export function roundMoney(amount: number): number {

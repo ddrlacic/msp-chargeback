@@ -76,6 +76,26 @@ describe('case timeline utils', () => {
       expect(rows[rows.length - 1].meta).toBe('Visa · Arbitration split');
     });
 
+    it('shows the arbitration fees on a lost ruling', () => {
+      const rows = getTimelineRows(getCase('CB-260577'));
+
+      expect(rows.map((row) => [row.title, row.meta, row.money])).toEqual([
+        ['Chargeback received', 'Cardholder’s bank · First chargeback', '$167.25 debited'],
+        ['Response sent to Worldpay', 'You · Represent', '$167.25 credited back'],
+        [
+          'The cardholder’s bank challenged your response',
+          'Cardholder’s bank · Arbitration chargeback',
+          '$167.25 debited',
+        ],
+        ['You took the case to arbitration', 'You · Request arbitration', undefined],
+        [
+          'Resolved in the cardholder’s favor',
+          'Mastercard · Arbitration lost',
+          '$400.00 arbitration fees debited',
+        ],
+      ]);
+    });
+
     it('colors the last event by the case state once the case is closed', () => {
       expect(getTimelineRows(getCase('CB-260655')).map((row) => row.tone)).toEqual([
         'neutral',

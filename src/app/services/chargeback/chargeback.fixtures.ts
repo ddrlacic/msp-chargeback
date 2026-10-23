@@ -48,10 +48,12 @@ interface CaseSeed {
   readonly challengeReason?: ChallengeReason;
   readonly amountDebited: number;
   readonly amountCredited: number;
+  readonly arbitrationFees?: number;
   readonly documents?: readonly ChargebackDocument[];
   readonly timeline: readonly TimelineSeed[];
   readonly draft?: ChallengeDraft;
   readonly worldpayNote?: string;
+  readonly issuerNote?: string;
 }
 
 const REASONS = {
@@ -60,6 +62,17 @@ const REASONS = {
   notAsDescribed: 'Cardholder says the order was not as described',
   duplicate: 'Cardholder says they were charged twice',
   notAuthorized: 'Cardholder says they did not authorize this payment',
+} as const;
+
+const ISSUER_NOTES = {
+  coldAndMissing:
+    'The cardholder says the food arrived cold and two items were missing. The invoice shows what was ordered, not what was delivered.',
+  notAsPictured:
+    'The cardholder sent photos showing the dishes did not match the menu. Your emails show they asked for a refund before they disputed the payment.',
+  neverDelivered:
+    'The cardholder says the order was never delivered. The receipt shows the payment, not the delivery.',
+  wrongAddress:
+    'The tracking shows the order was delivered to a different address from the one on the order.',
 } as const;
 
 export function createChargebackFixtures(today: Date): ChargebackCase[] {
@@ -99,12 +112,45 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
     worldpayTerm: 'Representment',
   });
 
-  const preArbitrationFiled = (offset: number, worldpayTerm = 'Pre-arbitration'): TimelineSeed => ({
+  const preArbitrationFiled = (
+    offset: number,
+    { worldpayTerm = 'Pre-arbitration', description }: Partial<TimelineSeed> = {},
+  ): TimelineSeed => ({
     occurredAt: at(offset, 10, 48),
     cycle: 'pre-arbitration',
     actor: 'cardholder-bank',
     title: 'The cardholder’s bank challenged your response',
     worldpayTerm,
+    description,
+  });
+
+  const preArbitrationResponseSent = (
+    offset: number,
+    documentIds: readonly string[],
+  ): TimelineSeed => ({
+    occurredAt: at(offset, 15, 10),
+    cycle: 'pre-arbitration',
+    actor: 'merchant',
+    title: 'Pre-arbitration response sent to Worldpay',
+    worldpayTerm: 'Represent',
+    documentIds,
+  });
+
+  const preArbitrationDeclined = (offset: number, description?: string): TimelineSeed => ({
+    occurredAt: at(offset, 9, 40),
+    cycle: 'pre-arbitration',
+    actor: 'cardholder-bank',
+    title: 'The cardholder’s bank declined your pre-arbitration response',
+    worldpayTerm: 'Issuer declined pre-arbitration',
+    description,
+  });
+
+  const arbitrationRequested = (offset: number): TimelineSeed => ({
+    occurredAt: at(offset, 15, 18),
+    cycle: 'arbitration',
+    actor: 'merchant',
+    title: 'You took the case to arbitration',
+    worldpayTerm: 'Request arbitration',
   });
 
   const doc = (
@@ -338,14 +384,16 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       amount: 176.5,
       replyByDay: 15,
       challengedAmount: 176.5,
+      challengeReason: 'proof-of-purchase',
       amountDebited: 176.5,
       amountCredited: 0,
+      issuerNote: ISSUER_NOTES.coldAndMissing,
       documents: [doc('CB-260815', 1, 'order-57102.pdf', 'invoice', 127_488, at(-33, 14, 20))],
       timeline: [
         received(-45, 176.5, 'visa'),
         responseSent(-33, undefined, ['CB-260815-doc-1']),
         forwarded(-32),
-        preArbitrationFiled(-5),
+        preArbitrationFiled(-5, { description: ISSUER_NOTES.coldAndMissing }),
       ],
     },
     {
@@ -365,6 +413,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       challengedAmount: 312,
       amountDebited: 624,
       amountCredited: 312,
+      issuerNote: ISSUER_NOTES.notAsPictured,
       documents: [
         doc('CB-260790', 1, 'order-56877.pdf', 'invoice', 133_120, at(-45, 14, 20)),
         doc(
@@ -380,9 +429,44 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
         received(-60, 312, 'mastercard'),
         responseSent(-45, 312, ['CB-260790-doc-1', 'CB-260790-doc-2']),
         {
-          ...preArbitrationFiled(-26, 'Arbitration chargeback'),
+          ...preArbitrationFiled(-26, {
+            worldpayTerm: 'Arbitration chargeback',
+            description: ISSUER_NOTES.notAsPictured,
+          }),
           amountChange: -312,
         },
+      ],
+    },
+    {
+      caseId: 'CB-260748',
+      status: 'decision-needed',
+      cycle: 'pre-arbitration',
+      network: 'visa',
+      cardLastFour: '4556',
+      reasonCode: '13.1',
+      reasonDescription: REASONS.notReceived,
+      location: 'airport',
+      orderNumber: 57020,
+      transactionDay: -62,
+      chargebackDay: -48,
+      amount: 94.5,
+      replyByDay: 2,
+      challengedAmount: 94.5,
+      challengeReason: 'proof-of-purchase',
+      amountDebited: 94.5,
+      amountCredited: 0,
+      issuerNote: ISSUER_NOTES.wrongAddress,
+      documents: [
+        doc('CB-260748', 1, 'receipt-57020.pdf', 'transaction-receipt', 139_264, at(-36, 14, 20)),
+        doc('CB-260748', 2, 'delivery-tracking.pdf', 'delivery-proof', 211_968, at(-8, 15, 4)),
+      ],
+      timeline: [
+        received(-48, 94.5, 'visa'),
+        responseSent(-36, undefined, ['CB-260748-doc-1']),
+        forwarded(-35),
+        preArbitrationFiled(-14, { description: ISSUER_NOTES.neverDelivered }),
+        preArbitrationResponseSent(-8, ['CB-260748-doc-2']),
+        preArbitrationDeclined(-5, ISSUER_NOTES.wrongAddress),
       ],
     },
     {
@@ -416,21 +500,8 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
         responseSent(-65, undefined, ['CB-260702-doc-1']),
         forwarded(-64),
         preArbitrationFiled(-40),
-        {
-          occurredAt: at(-34, 9, 40),
-          cycle: 'pre-arbitration',
-          actor: 'cardholder-bank',
-          title: 'The cardholder’s bank declined your pre-arbitration response',
-          worldpayTerm: 'Issuer declined pre-arbitration',
-        },
-        {
-          occurredAt: at(-30, 15, 18),
-          cycle: 'arbitration',
-          actor: 'merchant',
-          title: 'You took the case to arbitration',
-          worldpayTerm: 'Arbitration',
-          description: 'The card network is making a final decision',
-        },
+        preArbitrationDeclined(-34),
+        arbitrationRequested(-30),
       ],
     },
     {
@@ -473,6 +544,40 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       ],
     },
     {
+      caseId: 'CB-260634',
+      status: 'won',
+      cycle: 'arbitration',
+      network: 'visa',
+      cardLastFour: '4012',
+      reasonCode: '13.3',
+      reasonDescription: REASONS.notAsDescribed,
+      location: 'riverside',
+      orderNumber: 55980,
+      transactionDay: -125,
+      chargebackDay: -110,
+      amount: 132.8,
+      challengedAmount: 132.8,
+      amountDebited: 132.8,
+      amountCredited: 132.8,
+      documents: [doc('CB-260634', 1, 'invoice-55980.pdf', 'invoice', 125_952, at(-95, 14, 20))],
+      timeline: [
+        received(-110, 132.8, 'visa'),
+        responseSent(-95, undefined, ['CB-260634-doc-1']),
+        forwarded(-94),
+        preArbitrationFiled(-70),
+        preArbitrationDeclined(-62),
+        arbitrationRequested(-58),
+        {
+          occurredAt: at(-6, 11, 20),
+          cycle: 'arbitration',
+          actor: 'card-network',
+          title: 'Resolved in your favor',
+          worldpayTerm: 'Arbitration won',
+          amountChange: 132.8,
+        },
+      ],
+    },
+    {
       caseId: 'CB-260611',
       status: 'partially-won',
       cycle: 'arbitration',
@@ -504,13 +609,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
         responseSent(-104, undefined, ['CB-260611-doc-1', 'CB-260611-doc-2']),
         forwarded(-103),
         preArbitrationFiled(-80),
-        {
-          occurredAt: at(-70, 16, 2),
-          cycle: 'arbitration',
-          actor: 'merchant',
-          title: 'You took the case to arbitration',
-          worldpayTerm: 'Arbitration',
-        },
+        arbitrationRequested(-70),
         {
           occurredAt: at(-12, 12, 30),
           cycle: 'arbitration',
@@ -549,6 +648,44 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
           actor: 'cardholder-bank',
           title: 'The cardholder’s bank withdrew the dispute',
           worldpayTerm: 'Issuer recalled',
+        },
+      ],
+    },
+    {
+      caseId: 'CB-260577',
+      status: 'lost',
+      cycle: 'arbitration',
+      network: 'mastercard',
+      cardLastFour: '5161',
+      reasonCode: '4834',
+      reasonDescription: REASONS.duplicate,
+      location: 'midtown',
+      orderNumber: 56240,
+      transactionDay: -100,
+      chargebackDay: -86,
+      amount: 167.25,
+      challengedAmount: 167.25,
+      amountDebited: 334.5,
+      amountCredited: 167.25,
+      arbitrationFees: 400,
+      documents: [
+        doc('CB-260577', 1, 'receipt-56240.pdf', 'transaction-receipt', 141_312, at(-72, 14, 20)),
+      ],
+      timeline: [
+        received(-86, 167.25, 'mastercard'),
+        responseSent(-72, 167.25, ['CB-260577-doc-1']),
+        {
+          ...preArbitrationFiled(-50, { worldpayTerm: 'Arbitration chargeback' }),
+          amountChange: -167.25,
+        },
+        arbitrationRequested(-40),
+        {
+          occurredAt: at(-4, 10, 5),
+          cycle: 'arbitration',
+          actor: 'card-network',
+          title: 'Resolved in the cardholder’s favor',
+          worldpayTerm: 'Arbitration lost',
+          arbitrationFees: 400,
         },
       ],
     },
@@ -671,6 +808,7 @@ function toCase(seed: CaseSeed, day: (offset: number) => string): ChargebackCase
     challengeReason: seed.challengeReason,
     amountDebited: seed.amountDebited,
     amountCredited: seed.amountCredited,
+    arbitrationFees: seed.arbitrationFees,
     documents: seed.documents ?? [],
     timeline: seed.timeline.map((event, index) => ({
       id: `${seed.caseId}-event-${index + 1}`,
@@ -678,5 +816,6 @@ function toCase(seed: CaseSeed, day: (offset: number) => string): ChargebackCase
     })),
     draft: seed.draft,
     worldpayNote: seed.worldpayNote,
+    issuerNote: seed.issuerNote,
   };
 }

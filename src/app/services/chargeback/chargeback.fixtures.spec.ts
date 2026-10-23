@@ -50,6 +50,23 @@ describe('chargeback fixtures', () => {
     }
   });
 
+  it('matches the arbitration fees with the timeline', () => {
+    for (const chargeback of cases) {
+      const fees = chargeback.timeline.reduce(
+        (sum, event) => sum + (event.arbitrationFees ?? 0),
+        0,
+      );
+      expect(fees).toBe(chargeback.arbitrationFees ?? 0);
+    }
+  });
+
+  it('shows the bank’s note on its last event in the timeline', () => {
+    for (const chargeback of cases.filter((c) => c.issuerNote)) {
+      const last = chargeback.timeline.filter((event) => event.actor === 'cardholder-bank').at(-1);
+      expect(last?.description).toBe(chargeback.issuerNote);
+    }
+  });
+
   it('dates the cases relative to today', () => {
     const first = cases.find((c) => c.caseId === 'CB-261018');
 

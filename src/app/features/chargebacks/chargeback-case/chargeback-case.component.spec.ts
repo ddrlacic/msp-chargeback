@@ -148,6 +148,67 @@ describe('ChargebackCaseComponent', () => {
     );
   });
 
+  it('opens the pre-arbitration response from its option card', () => {
+    const element = render('CB-260815');
+
+    click(element.querySelector('app-case-status-banner [data-action="respond-pre-arbitration"]'));
+
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(['/chargebacks', 'CB-260815', 'respond']);
+  });
+
+  it('warns about the fees before taking a case to arbitration', () => {
+    const element = render('CB-260790');
+    const dialog = element.querySelector('app-case-arbitration-dialog dialog');
+
+    expect(dialog?.hasAttribute('open')).toBe(false);
+
+    click(element.querySelector('app-case-status-banner [data-action="request-arbitration"]'));
+
+    expect(dialog?.hasAttribute('open')).toBe(true);
+    expect(text(dialog?.querySelector('h2'))).toBe('Request arbitration');
+    expect(text(dialog?.querySelector('p'))).toBe(
+      'Mastercard reviews both sides and makes a final decision',
+    );
+    expect(
+      Array.from(dialog?.querySelectorAll('dt, dd') ?? []).map((item) => text(item)),
+    ).toEqual([
+      'If you win',
+      '$312.00 is returned to your account',
+      'If you lose',
+      '$312.00 stays charged and you pay $400 in fees',
+      '$150 filing fee and $250 review fee, plus $100 for each technical error',
+    ]);
+    expect(TestBed.inject(ChargebackStore).getById('CB-260790')?.status).toBe('decision-needed');
+  });
+
+  it('keeps the decision open when the merchant cancels the fee warning', () => {
+    const element = render('CB-260790');
+    click(element.querySelector('app-case-timeline [data-pending] button'));
+
+    click(element.querySelector('app-case-arbitration-dialog [data-action="cancel"]'));
+
+    expect(
+      element.querySelector('app-case-arbitration-dialog dialog')?.hasAttribute('open'),
+    ).toBe(false);
+    expect(TestBed.inject(ChargebackStore).getById('CB-260790')?.status).toBe('decision-needed');
+  });
+
+  it('takes the case to arbitration once the merchant confirms', () => {
+    const element = render('CB-260790');
+    click(element.querySelector('app-case-status-banner [data-action="request-arbitration"]'));
+
+    click(element.querySelector('app-case-arbitration-dialog [data-action="confirm"]'));
+
+    expect(TestBed.inject(ChargebackStore).getById('CB-260790')?.status).toBe('arbitration');
+    expect(
+      element.querySelector('app-case-arbitration-dialog dialog')?.hasAttribute('open'),
+    ).toBe(false);
+    expect(text(element.querySelector('app-case-status-banner h2'))).toBe(
+      'The card network is making a final decision',
+    );
+    expect(element.querySelector('app-case-deadline')).toBe(null);
+  });
+
   it('shows Worldpay’s note on a returned response', () => {
     const banner = render('CB-260954').querySelector('app-case-status-banner');
 
@@ -155,6 +216,16 @@ describe('ChargebackCaseComponent', () => {
     expect(text(banner?.querySelector('blockquote'))).toBe(
       'The delivery photo is hard to read. Upload a clearer copy that shows the delivery address and time.',
     );
+  });
+
+  it('shows the bank’s note above the pre-arbitration options', () => {
+    const banner = render('CB-260815').querySelector('app-case-status-banner');
+
+    expect(text(banner?.querySelector('figcaption'))).toBe('Note from the cardholder’s bank');
+    expect(text(banner?.querySelector('blockquote'))).toBe(
+      'The cardholder says the food arrived cold and two items were missing. The invoice shows what was ordered, not what was delivered.',
+    );
+    expect(banner?.querySelectorAll('li [data-action]').length).toBe(2);
   });
 
   it('shows the money summary', () => {

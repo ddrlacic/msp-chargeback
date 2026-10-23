@@ -1,8 +1,13 @@
 import { createChargebackFixtures } from './chargeback.fixtures';
-import { CHARGEBACK_STATUSES } from './chargeback.types';
+import { CHARGEBACK_STATUSES, ChargebackCase } from './chargeback.types';
 import {
   getAllowedActions,
+  getAmountAtStake,
+  getArbitrationFeeSchedule,
+  getArbitrationFeeTotal,
   getMoneySummary,
+  getNetAmount,
+  getOutstandingAmount,
   getResponseWindowDays,
   getStatusState,
   isNeedsAction,
@@ -98,18 +103,54 @@ describe('chargeback utils', () => {
     ).toBe(undefined);
   });
 
-  it('summarizes money with a net amount', () => {
-    const decisionNeeded = createChargebackFixtures(TEST_TODAY).find(
-      (c) => c.status === 'decision-needed',
-    );
+  describe('money', () => {
+    const cases = createChargebackFixtures(TEST_TODAY);
+    const find = (caseId: string): ChargebackCase => {
+      const found = cases.find((chargeback) => chargeback.caseId === caseId);
+      if (!found) {
+        throw new Error(`Missing fixture ${caseId}`);
+      }
+      return found;
+    };
 
-    expect(decisionNeeded && getMoneySummary(decisionNeeded)).toEqual({
-      currency: 'USD',
-      chargebackAmount: 312,
-      challengedAmount: 312,
-      amountDebited: 624,
-      amountCredited: 312,
-      netAmount: -312,
+    it('summarizes money with a net amount', () => {
+      expect(getMoneySummary(find('CB-260790'))).toEqual({
+        currency: 'USD',
+        chargebackAmount: 312,
+        challengedAmount: 312,
+        amountDebited: 624,
+        amountCredited: 312,
+        arbitrationFees: 0,
+        netAmount: -312,
+      });
     });
+
+    it('takes arbitration fees off the net', () => {
+      expect(getNetAmount(find('CB-260577'))).toBe(-567.25);
+    });
+
+    it('never reports a negative outstanding amount', () => {
+      expect(getOutstandingAmount(find('CB-260655'))).toBe(0);
+      expect(getOutstandingAmount(find('CB-260540'))).toBe(155.4);
+    });
+
+    it('stakes what is still debited, up to the challenged amount', () => {
+      const chargeback = find('CB-260790');
+
+      expect(getAmountAtStake(chargeback)).toBe(312);
+      expect(getAmountAtStake({ ...chargeback, challengedAmount: 200 })).toBe(200);
+    });
+  });
+
+  it('knows the arbitration fees of Visa and Mastercard only', () => {
+    const visa = getArbitrationFeeSchedule('visa');
+    const mastercard = getArbitrationFeeSchedule('mastercard');
+
+    expect(visa).toEqual({ filing: 250, review: 250, upTo: true });
+    expect(visa && getArbitrationFeeTotal(visa)).toBe(500);
+    expect(mastercard && getArbitrationFeeTotal(mastercard)).toBe(400);
+    expect(mastercard?.perTechnicalError).toBe(100);
+    expect(getArbitrationFeeSchedule('discover')).toBe(undefined);
+    expect(getArbitrationFeeSchedule('amex')).toBe(undefined);
   });
 });

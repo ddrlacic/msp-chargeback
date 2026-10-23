@@ -9,12 +9,16 @@ import {
   createInitialState,
   getChallengedAmount,
   getEvidenceRows,
+  getIncomingNote,
   getInitialStep,
+  getMaxChallengeAmount,
   getRespondMode,
   getStepIndex,
   hasBlockedDocuments,
+  hasFormChanged,
   hasScanningDocuments,
   RESPOND_STEPS,
+  RespondFormState,
   RespondMode,
   RespondStep,
   wasDocumentSent,
@@ -25,6 +29,12 @@ export class ChargebackRespondFlow {
   private readonly store = inject(ChargebackStore);
   private readonly files = inject(CaseDocumentFilesService);
   private settled = false;
+  private readonly initial = signal<RespondFormState>({
+    amountChoice: 'full',
+    amountText: '',
+    documentIds: [],
+    note: '',
+  });
 
   readonly caseId = signal('');
   readonly mode = signal<RespondMode>('challenge');
@@ -37,8 +47,15 @@ export class ChargebackRespondFlow {
   readonly attempted = signal(false);
 
   readonly chargeback = computed(() => this.store.getById(this.caseId()));
-  readonly fullAmount = computed(() => this.chargeback()?.chargebackAmount ?? 0);
+  readonly fullAmount = computed(() => {
+    const chargeback = this.chargeback();
+    return chargeback ? getMaxChallengeAmount(chargeback) : 0;
+  });
   readonly currency = computed(() => this.chargeback()?.currency ?? 'USD');
+  readonly incomingNote = computed(() => {
+    const chargeback = this.chargeback();
+    return chargeback ? getIncomingNote(chargeback, this.mode()) : undefined;
+  });
   readonly challengedAmount = computed(() =>
     getChallengedAmount(this.amountChoice(), this.amountText(), this.fullAmount()),
   );
@@ -71,12 +88,17 @@ export class ChargebackRespondFlow {
   readonly isFirst = computed(() => this.stepIndex() === 0);
   readonly isLast = computed(() => this.stepIndex() === RESPOND_STEPS.length - 1);
 
-  readonly hasProgress = computed(
-    () =>
-      this.reason() !== undefined ||
-      this.documentIds().length > 0 ||
-      this.note().trim() !== '' ||
-      (this.amountChoice() === 'partial' && this.amountText().trim() !== ''),
+  readonly hasProgress = computed(() =>
+    hasFormChanged(
+      {
+        reason: this.reason(),
+        amountChoice: this.amountChoice(),
+        amountText: this.amountText(),
+        documentIds: this.documentIds(),
+        note: this.note(),
+      },
+      this.initial(),
+    ),
   );
 
   constructor() {
@@ -91,6 +113,7 @@ export class ChargebackRespondFlow {
     }
     const mode = getRespondMode(chargeback) ?? 'challenge';
     const state = createInitialState(chargeback);
+    this.initial.set(state);
     this.mode.set(mode);
     this.reason.set(state.reason);
     this.amountChoice.set(state.amountChoice);
@@ -98,7 +121,12 @@ export class ChargebackRespondFlow {
     this.documentIds.set(state.documentIds);
     this.note.set(state.note);
     this.step.set(
-      getInitialStep(mode, state, chargeback.chargebackAmount, chargeback.draft !== undefined),
+      getInitialStep(
+        mode,
+        state,
+        getMaxChallengeAmount(chargeback),
+        chargeback.draft !== undefined,
+      ),
     );
   }
 
@@ -179,7 +207,7 @@ export class ChargebackRespondFlow {
   }
 
   private saveOnLeave(): void {
-    if (this.settled || this.mode() !== 'challenge' || !this.hasProgress()) {
+    if (this.settled || this.mode() === 'resubmit' || !this.hasProgress()) {
       return;
     }
     const amount = this.challengedAmount();

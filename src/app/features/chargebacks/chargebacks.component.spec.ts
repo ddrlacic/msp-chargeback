@@ -76,18 +76,18 @@ describe('ChargebacksComponent', () => {
       text(card(tab)?.querySelector('[data-detail]') ?? null),
     ];
 
-    expect(summary('needs-action')).toEqual(['7', '$1,053.75 disputed']);
+    expect(summary('needs-action')).toEqual(['8', '$1,148.25 disputed']);
     expect(summary('in-review')).toEqual(['4', '$522.89 disputed']);
-    expect(summary('won')).toEqual(['3', '$234.05 returned']);
-    expect(text(card('needs-action')?.firstElementChild ?? null)).toBe('Needs action • 4 due soon');
-    expect(text(card('needs-action')?.querySelector('[data-due-soon]') ?? null)).toBe('4 due soon');
+    expect(summary('won')).toEqual(['4', '$366.85 returned']);
+    expect(text(card('needs-action')?.firstElementChild ?? null)).toBe('Needs action • 5 due soon');
+    expect(text(card('needs-action')?.querySelector('[data-due-soon]') ?? null)).toBe('5 due soon');
     expect(element.querySelectorAll('[data-due-soon]').length).toBe(1);
     expect(element.querySelector('[data-tile]')).toBe(null);
   });
 
   it('lists every case, soonest due date first', () => {
-    expect(bodyRows().length).toBe(17);
-    expect(caseIds().slice(0, 3)).toEqual(['CB-261031', 'CB-261018', 'CB-260954']);
+    expect(bodyRows().length).toBe(20);
+    expect(caseIds().slice(0, 3)).toEqual(['CB-261031', 'CB-260748', 'CB-261018']);
     expect(header('Due date').getAttribute('aria-sort')).toBe('ascending');
   });
 
@@ -126,12 +126,12 @@ describe('ChargebacksComponent', () => {
 
   it('shows the cases of one state per tab', async () => {
     const wonTab = element.querySelector('[role="tab"][data-tab="won"]');
-    expect(text(wonTab?.querySelector('[data-count]') ?? null)).toBe('3');
+    expect(text(wonTab?.querySelector('[data-count]') ?? null)).toBe('4');
 
     await click(wonTab);
 
     expect(wonTab?.getAttribute('aria-selected')).toBe('true');
-    expect(bodyRows().length).toBe(3);
+    expect(bodyRows().length).toBe(4);
     expect(element.querySelector('[role="tabpanel"]')?.getAttribute('aria-labelledby')).toBe(
       'chargebacks-tab-won',
     );
@@ -148,7 +148,7 @@ describe('ChargebacksComponent', () => {
     );
     await click(clear);
 
-    expect(bodyRows().length).toBe(17);
+    expect(bodyRows().length).toBe(20);
   });
 
   it('shows applied filters as chips that can be removed one by one or all at once', async () => {
@@ -162,11 +162,11 @@ describe('ChargebacksComponent', () => {
 
     await click(visa?.querySelector('input'));
 
-    expect(bodyRows().length).toBe(6);
+    expect(bodyRows().length).toBe(8);
     expect(text(element.querySelector('[data-filter="networks"]'))).toBe('Card network: Visa');
 
     await click(element.querySelector('[aria-label="Remove Card network filter"]'));
-    expect(bodyRows().length).toBe(17);
+    expect(bodyRows().length).toBe(20);
     expect(element.querySelector('app-filter-chips')).toBe(null);
 
     await click(visa?.querySelector('input'));
@@ -197,20 +197,20 @@ describe('ChargebacksComponent', () => {
     await click(rowFor('CB-261018').querySelector('input[type="checkbox"]'));
 
     expect(navigate).toHaveBeenCalledTimes(0);
-    expect(text(element.querySelector('[aria-live="polite"]'))).toBe('1 of 17 selected');
+    expect(text(element.querySelector('[aria-live="polite"]'))).toBe('1 of 20 selected');
   });
 
   it('selects every case in view and counts them in the footer and export button', async () => {
     const selectAll = element.querySelector<HTMLInputElement>(
       'thead input[aria-label="Select all cases in view"]',
     );
-    expect(text(element.querySelector('[aria-live="polite"]'))).toBe('17 cases in view');
+    expect(text(element.querySelector('[aria-live="polite"]'))).toBe('20 cases in view');
 
     await click(selectAll);
 
-    expect(text(element.querySelector('[aria-live="polite"]'))).toBe('17 of 17 selected');
+    expect(text(element.querySelector('[aria-live="polite"]'))).toBe('20 of 20 selected');
     expect(
-      [...element.querySelectorAll('button')].some((button) => text(button) === 'Export 17 cases'),
+      [...element.querySelectorAll('button')].some((button) => text(button) === 'Export 20 cases'),
     ).toBe(true);
   });
 

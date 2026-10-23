@@ -23,6 +23,12 @@ export class RespondReviewStepComponent {
 
   protected readonly deadline = computed(() => {
     const date = this.flow.chargeback()?.replyByDate;
-    return date ? this.copy.DEADLINE(formatDate(date)) : undefined;
+    return date && !this.flow.incomingNote() ? this.copy.DEADLINE(formatDate(date)) : undefined;
   });
+
+  protected readonly description = computed(() =>
+    this.flow.mode() === 'pre-arbitration'
+      ? this.copy.PRE_ARBITRATION_DESCRIPTION
+      : this.copy.DESCRIPTION,
+  );
 }

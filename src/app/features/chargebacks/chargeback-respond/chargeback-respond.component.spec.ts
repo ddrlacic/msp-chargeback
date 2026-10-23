@@ -384,6 +384,52 @@ describe('ChargebackRespondComponent', () => {
     });
   });
 
+  describe('pre-arbitration response', () => {
+    let element: HTMLElement;
+
+    beforeEach(() => {
+      element = render('CB-260815');
+    });
+
+    it('shows the bank’s note and deadline on every step', () => {
+      const note =
+        'Note from the cardholder’s bank The cardholder says the food arrived cold and two items were missing. The invoice shows what was ordered, not what was delivered. Respond by Nov 6, 2026, or the chargeback stands';
+
+      expect(spoken(element.querySelector('aside'))).toBe(note);
+      expect(element.querySelector('[data-deadline]')).toBe(null);
+
+      click(element.querySelector('[data-step="review"] button'));
+
+      expect(heading(element)).toBe('Review');
+      expect(spoken(element.querySelector('aside'))).toBe(note);
+      expect(text(element.querySelector('app-respond-review-step > div'))).toBe(
+        'The cardholder’s bank reviewed your response and still disputes the payment',
+      );
+    });
+
+    it('starts at the evidence with the previous response', () => {
+      expect(text(element.querySelector('h1'))).toBe('Respond to pre-arbitration');
+      expect(heading(element)).toBe('Evidence');
+      expect(stepStatuses(element)).toEqual(['complete', 'complete', 'current', 'upcoming']);
+      const previous = element.querySelector('[data-previous-response]');
+      expect(text(previous?.querySelector('h3'))).toBe('Your previous response');
+      expect(spoken(previous?.querySelector('[data-row="amount"]'))).toBe('Amount $176.50');
+      expect(
+        Array.from(previous?.querySelectorAll('[data-row="documents"] li') ?? []).map(spoken),
+      ).toEqual(['order-57102.pdf Invoice · 125 KB']);
+    });
+
+    it('keeps the reason and amount one step back', () => {
+      click(action(element, 'back'));
+
+      expect(heading(element)).toBe('Reason and amount');
+      expect(optionLabels(element.querySelectorAll('app-radio-group')[1])).toEqual([
+        'Same amount as before ($176.50)',
+        'Smaller amount',
+      ]);
+    });
+  });
+
   describe('fix and resubmit', () => {
     let element: HTMLElement;
 

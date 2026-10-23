@@ -1,10 +1,10 @@
 <app-page [title]="title()" [breadcrumbs]="breadcrumbs()">
   @if (chargeback()) {
     <div class="@container mx-auto flex w-full max-w-2xl flex-col gap-6">
-      @if (worldpayNote(); as note) {
+      @if (note(); as note) {
         <aside
           class="flex gap-3 rounded-md border border-warning-30 bg-warning-15 p-4"
-          [attr.aria-label]="copy.NOTE.TITLE"
+          [attr.aria-label]="note.title"
         >
           <span class="mt-px shrink-0 text-warning-120" aria-hidden="true">
             <lucide-icon
@@ -16,7 +16,7 @@
             />
           </span>
           <div class="min-w-0 flex-1">
-            <p class="font-semibold text-ink">{{ copy.NOTE.TITLE }}</p>
+            <p class="font-semibold text-ink">{{ note.title }}</p>
             <p class="text-pretty text-ink">{{ note.text }}</p>
             @if (note.deadline; as deadline) {
               <p class="mt-1 text-pretty text-ink-strong tabular-nums">{{ deadline }}</p>
