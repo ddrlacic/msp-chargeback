@@ -22,13 +22,13 @@ describe('chargeback utils', () => {
 
     expect(states).toEqual({
       'action-required': 'needs-action',
-      'evidence-required': 'needs-action',
+      'draft-not-submitted': 'needs-action',
       'returned-by-worldpay': 'needs-action',
       'response-submitted': 'in-review',
       'under-review': 'in-review',
       'pre-arbitration': 'in-review',
       'pre-arbitration-response-required': 'needs-action',
-      'decision-needed': 'needs-action',
+      'arbitration-decision-needed': 'needs-action',
       arbitration: 'in-review',
       won: 'won',
       'partially-won': 'won',
@@ -90,7 +90,7 @@ describe('chargeback utils', () => {
     ).toBe(10);
     expect(
       getResponseWindowDays({
-        status: 'decision-needed',
+        status: 'arbitration-decision-needed',
         cycle: 'pre-arbitration',
         network: 'mastercard',
       }),

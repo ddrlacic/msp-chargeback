@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { ChargebackStore } from '../../../services/chargeback/chargeback.store';
 import { ChallengeReason, ChargebackDocument } from '../../../services/chargeback/chargeback.types';
@@ -29,6 +29,7 @@ export class ChargebackRespondFlow {
   private readonly store = inject(ChargebackStore);
   private readonly files = inject(CaseDocumentFilesService);
   private settled = false;
+  private readonly uploadedIds = new Set<string>();
   private readonly initial = signal<RespondFormState>({
     amountChoice: 'full',
     amountText: '',
@@ -64,6 +65,16 @@ export class ChargebackRespondFlow {
     return this.documentIds()
       .map((id) => available.find((document) => document.id === id))
       .filter((document): document is ChargebackDocument => document !== undefined);
+  });
+  readonly keptDocuments = computed<readonly ChargebackDocument[]>(() => {
+    const chargeback = this.chargeback();
+    if (!chargeback) {
+      return [];
+    }
+    const ids = new Set(this.documentIds());
+    return chargeback.documents.filter(
+      (document) => ids.has(document.id) || wasDocumentSent(chargeback, document.id),
+    );
   });
   readonly evidenceRows = computed(() => getEvidenceRows(this.reason(), this.documents()));
   readonly scanning = computed(() => hasScanningDocuments(this.documents()));
@@ -101,12 +112,10 @@ export class ChargebackRespondFlow {
     ),
   );
 
-  constructor() {
-    inject(DestroyRef).onDestroy(() => this.saveOnLeave());
-  }
-
   init(caseId: string): void {
     this.caseId.set(caseId);
+    this.settled = false;
+    this.uploadedIds.clear();
     const chargeback = this.store.getById(caseId);
     if (!chargeback) {
       return;
@@ -165,7 +174,10 @@ export class ChargebackRespondFlow {
       request.type,
       request.files.map((file) => ({ name: file.name, sizeBytes: file.size })),
     );
-    ids.forEach((id, index) => this.files.store(id, request.files[index]));
+    ids.forEach((id, index) => {
+      this.uploadedIds.add(id);
+      this.files.store(id, request.files[index]);
+    });
     this.documentIds.update((current) => [...current, ...ids]);
   }
 
@@ -175,39 +187,26 @@ export class ChargebackRespondFlow {
 
   removeDocument(documentId: string): void {
     this.documentIds.update((current) => current.filter((id) => id !== documentId));
-    const chargeback = this.chargeback();
-    if (chargeback && !wasDocumentSent(chargeback, documentId)) {
-      this.store.deleteDocument(this.caseId(), documentId);
+  }
+
+  tryLeave(): boolean {
+    if (this.settled) {
+      return true;
     }
-  }
-
-  saveAndExit(): void {
-    this.saveOnLeave();
-    this.settled = true;
-  }
-
-  discard(): void {
-    this.settled = true;
-  }
-
-  submit(): boolean {
-    const reason = this.reason();
-    const amount = this.challengedAmount();
-    if (!this.valid().submit || reason === undefined || amount === undefined) {
+    if (this.hasProgress()) {
       return false;
     }
-    this.settled = true;
-    this.store.submitResponse(this.caseId(), {
-      reason,
-      challengedAmount: amount,
-      documentIds: this.documentIds(),
-      note: this.note().trim() || undefined,
-    });
+    this.discard();
     return true;
   }
 
-  private saveOnLeave(): void {
-    if (this.settled || this.mode() === 'resubmit' || !this.hasProgress()) {
+  saveAndExit(): void {
+    if (this.settled) {
+      return;
+    }
+    this.settled = true;
+    this.deleteUnused(this.documentIds());
+    if (this.mode() === 'resubmit' || !this.hasProgress()) {
       return;
     }
     const amount = this.challengedAmount();
@@ -217,5 +216,41 @@ export class ChargebackRespondFlow {
       documentIds: this.documentIds(),
       note: this.note().trim() || undefined,
     });
+  }
+
+  discard(): void {
+    if (this.settled) {
+      return;
+    }
+    this.settled = true;
+    this.deleteUnused(this.initial().documentIds);
+  }
+
+  submit(): boolean {
+    const reason = this.reason();
+    const amount = this.challengedAmount();
+    if (!this.valid().submit || reason === undefined || amount === undefined) {
+      return false;
+    }
+    this.settled = true;
+    this.deleteUnused(this.documentIds());
+    this.store.submitResponse(this.caseId(), {
+      reason,
+      challengedAmount: amount,
+      documentIds: this.documentIds(),
+      note: this.note().trim() || undefined,
+    });
+    return true;
+  }
+
+  private deleteUnused(keep: readonly string[]): void {
+    const chargeback = this.chargeback();
+    if (!chargeback) {
+      return;
+    }
+    const kept = new Set(keep);
+    [...this.initial().documentIds, ...this.uploadedIds]
+      .filter((id) => !kept.has(id) && !wasDocumentSent(chargeback, id))
+      .forEach((id) => this.store.deleteDocument(this.caseId(), id));
   }
 }

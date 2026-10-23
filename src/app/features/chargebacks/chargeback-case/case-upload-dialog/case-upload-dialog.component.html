@@ -1,33 +1,5 @@
-<app-dialog [open]="open()" [title]="copy.TITLE" [width]="480" (closed)="close()">
+<app-dialog [open]="open()" [title]="title()" [width]="480" (closed)="close()">
   <div class="mt-4 flex flex-col gap-4">
-    <div class="flex flex-col gap-1">
-      <label class="font-semibold text-ink" [for]="typeId">{{ copy.TYPE }}</label>
-      <div class="relative flex items-center">
-        <select
-          class="h-control w-full min-w-0 appearance-none rounded-md bg-white pr-9 pl-3 text-ink shadow-field transition-[box-shadow] duration-200 ease-in-out hover:shadow-field-hover"
-          required
-          [id]="typeId"
-          (change)="onType($event)"
-        >
-          <option value="" disabled [selected]="type() === ''">{{ copy.TYPE_PLACEHOLDER }}</option>
-          @for (option of typeOptions; track option.value) {
-            <option [value]="option.value" [selected]="type() === option.value">
-              {{ option.label }}
-            </option>
-          }
-        </select>
-        <span class="pointer-events-none absolute right-3 text-ink-subtle" aria-hidden="true">
-          <lucide-icon
-            name="chevron-down"
-            class="block size-4"
-            [size]="16"
-            [strokeWidth]="1.5"
-            [absoluteStrokeWidth]="true"
-          />
-        </span>
-      </div>
-    </div>
-
     <div
       class="flex flex-col items-center rounded-md border border-dashed px-4 py-6 text-center transition-[background-color,border-color] duration-200 ease-in-out"
       [class]="dragging() ? 'border-accent-80 bg-accent-05' : 'border-line-strong bg-white'"

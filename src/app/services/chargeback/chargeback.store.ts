@@ -107,7 +107,7 @@ export class ChargebackStore {
     this.updateCase(caseId, (chargeback) => ({
       ...(chargeback.status === 'pre-arbitration-response-required'
         ? chargeback
-        : this.withStatus(chargeback, 'evidence-required')),
+        : this.withStatus(chargeback, 'draft-not-submitted')),
       draft: { ...draft, savedAt: this.clock.now().toISOString() },
     }));
   }
@@ -159,7 +159,11 @@ export class ChargebackStore {
     );
   }
 
-  recordArbitrationRuling(caseId: string, ruling: ArbitrationRuling, returnedAmount?: number): void {
+  recordArbitrationRuling(
+    caseId: string,
+    ruling: ArbitrationRuling,
+    returnedAmount?: number,
+  ): void {
     this.updateCase(caseId, (chargeback) => {
       const atStake = getAmountAtStake(chargeback);
       const closed: ChargebackCase = {
@@ -184,9 +188,7 @@ export class ChargebackStore {
         );
       }
       const credit =
-        ruling === 'won'
-          ? atStake
-          : roundMoney(Math.min(returnedAmount ?? atStake / 2, atStake));
+        ruling === 'won' ? atStake : roundMoney(Math.min(returnedAmount ?? atStake / 2, atStake));
       return this.withEvent(
         { ...closed, amountCredited: roundMoney(chargeback.amountCredited + credit) },
         {

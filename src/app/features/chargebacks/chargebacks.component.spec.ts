@@ -99,7 +99,7 @@ describe('ChargebacksComponent', () => {
     );
     expect(row.querySelector('app-chargeback-due-date')?.getAttribute('data-tone')).toBe('soon');
     const action = row.querySelectorAll('a')[1];
-    expect(text(action)).toBe('Review and respond');
+    expect(text(action)).toBe('Respond to chargeback');
     expect(action.getAttribute('data-style')).toBe('invisible');
   });
 

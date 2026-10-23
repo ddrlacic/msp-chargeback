@@ -49,7 +49,7 @@ describe('chargebacks list utils', () => {
         daysLeft: 1,
         tone: 'soon',
       });
-      expect(row.actionLabel).toBe('Review and respond');
+      expect(row.actionLabel).toBe('Respond to chargeback');
       expect(row.actionStyle).toBe('invisible');
     });
 

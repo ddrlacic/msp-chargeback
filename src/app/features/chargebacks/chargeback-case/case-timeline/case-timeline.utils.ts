@@ -85,7 +85,7 @@ function getPendingContent(
   const date = chargeback.replyByDate ? formatDate(chargeback.replyByDate) : undefined;
   switch (chargeback.status) {
     case 'action-required':
-    case 'evidence-required':
+    case 'draft-not-submitted':
     case 'pre-arbitration-response-required':
       return {
         title: copy.PENDING.RESPONSE_NEEDED,
@@ -96,7 +96,7 @@ function getPendingContent(
         title: copy.PENDING.RETURNED,
         detail: date ? copy.PENDING.RESUBMIT_BY(date) : undefined,
       };
-    case 'decision-needed':
+    case 'arbitration-decision-needed':
       return {
         title: copy.PENDING.DECISION_NEEDED,
         detail: date ? copy.PENDING.DECIDE_BY(date) : undefined,

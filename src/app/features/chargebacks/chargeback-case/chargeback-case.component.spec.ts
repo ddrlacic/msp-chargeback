@@ -169,16 +169,16 @@ describe('ChargebackCaseComponent', () => {
     expect(text(dialog?.querySelector('p'))).toBe(
       'Mastercard reviews both sides and makes a final decision',
     );
-    expect(
-      Array.from(dialog?.querySelectorAll('dt, dd') ?? []).map((item) => text(item)),
-    ).toEqual([
+    expect(Array.from(dialog?.querySelectorAll('dt, dd') ?? []).map((item) => text(item))).toEqual([
       'If you win',
       '$312.00 is returned to your account',
       'If you lose',
       '$312.00 stays charged and you pay $400 in fees',
       '$150 filing fee and $250 review fee, plus $100 for each technical error',
     ]);
-    expect(TestBed.inject(ChargebackStore).getById('CB-260790')?.status).toBe('decision-needed');
+    expect(TestBed.inject(ChargebackStore).getById('CB-260790')?.status).toBe(
+      'arbitration-decision-needed',
+    );
   });
 
   it('keeps the decision open when the merchant cancels the fee warning', () => {
@@ -187,10 +187,12 @@ describe('ChargebackCaseComponent', () => {
 
     click(element.querySelector('app-case-arbitration-dialog [data-action="cancel"]'));
 
-    expect(
-      element.querySelector('app-case-arbitration-dialog dialog')?.hasAttribute('open'),
-    ).toBe(false);
-    expect(TestBed.inject(ChargebackStore).getById('CB-260790')?.status).toBe('decision-needed');
+    expect(element.querySelector('app-case-arbitration-dialog dialog')?.hasAttribute('open')).toBe(
+      false,
+    );
+    expect(TestBed.inject(ChargebackStore).getById('CB-260790')?.status).toBe(
+      'arbitration-decision-needed',
+    );
   });
 
   it('takes the case to arbitration once the merchant confirms', () => {
@@ -200,9 +202,9 @@ describe('ChargebackCaseComponent', () => {
     click(element.querySelector('app-case-arbitration-dialog [data-action="confirm"]'));
 
     expect(TestBed.inject(ChargebackStore).getById('CB-260790')?.status).toBe('arbitration');
-    expect(
-      element.querySelector('app-case-arbitration-dialog dialog')?.hasAttribute('open'),
-    ).toBe(false);
+    expect(element.querySelector('app-case-arbitration-dialog dialog')?.hasAttribute('open')).toBe(
+      false,
+    );
     expect(text(element.querySelector('app-case-status-banner h2'))).toBe(
       'The card network is making a final decision',
     );

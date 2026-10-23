@@ -9,13 +9,13 @@ import {
 
 const STATUS_STATES: Record<ChargebackStatus, ChargebackColorState> = {
   'action-required': 'needs-action',
-  'evidence-required': 'needs-action',
+  'draft-not-submitted': 'needs-action',
   'returned-by-worldpay': 'needs-action',
   'response-submitted': 'in-review',
   'under-review': 'in-review',
   'pre-arbitration': 'in-review',
   'pre-arbitration-response-required': 'needs-action',
-  'decision-needed': 'needs-action',
+  'arbitration-decision-needed': 'needs-action',
   arbitration: 'in-review',
   won: 'won',
   'partially-won': 'won',
@@ -27,13 +27,13 @@ const STATUS_STATES: Record<ChargebackStatus, ChargebackColorState> = {
 
 const STATUS_ALLOWED_ACTIONS: Record<ChargebackStatus, readonly ChargebackAction[]> = {
   'action-required': ['challenge', 'accept'],
-  'evidence-required': ['continue-challenge', 'accept'],
+  'draft-not-submitted': ['continue-challenge', 'accept'],
   'returned-by-worldpay': ['resubmit', 'accept'],
   'response-submitted': [],
   'under-review': [],
   'pre-arbitration': [],
   'pre-arbitration-response-required': ['respond-pre-arbitration', 'accept'],
-  'decision-needed': ['request-arbitration', 'accept'],
+  'arbitration-decision-needed': ['request-arbitration', 'accept'],
   arbitration: [],
   won: [],
   'partially-won': [],
@@ -130,7 +130,7 @@ export function roundMoney(amount: number): number {
 function getResponseStage(
   chargeback: Pick<ChargebackCase, 'status' | 'cycle'>,
 ): ResponseStage | undefined {
-  if (chargeback.status === 'decision-needed') {
+  if (chargeback.status === 'arbitration-decision-needed') {
     return 'arbitration-request';
   }
   if (!isNeedsAction(chargeback.status)) {

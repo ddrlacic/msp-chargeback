@@ -35,12 +35,12 @@ const dialogCopy = CHARGEBACKS_CONSTANTS.ARBITRATION_DIALOG;
 const OPTION_STATUSES: readonly ChargebackStatus[] = [
   'action-required',
   'pre-arbitration-response-required',
-  'decision-needed',
+  'arbitration-decision-needed',
 ];
 
 const BANK_NOTE_STATUSES: readonly ChargebackStatus[] = [
   'pre-arbitration-response-required',
-  'decision-needed',
+  'arbitration-decision-needed',
 ];
 
 export interface CaseAction {
@@ -162,7 +162,7 @@ export function getCaseDeadline(chargeback: ChargebackCase): CaseDeadline | unde
   }
   return {
     title:
-      chargeback.status === 'decision-needed'
+      chargeback.status === 'arbitration-decision-needed'
         ? copy.DEADLINE.DECIDE_BY
         : copy.DEADLINE.RESPOND_BY,
     date: chargeback.replyByDate,
@@ -219,13 +219,11 @@ export function getMoneySummary(chargeback: ChargebackCase): MoneySummaryView {
       value: formatSignedMoney(-chargeback.arbitrationFees, currency),
     });
   }
-  rows.push(
-    {
-      key: 'net',
-      label: open ? copy.MONEY.NET_SO_FAR : copy.MONEY.NET,
-      value: formatSignedMoney(net, currency),
-    },
-  );
+  rows.push({
+    key: 'net',
+    label: open ? copy.MONEY.NET_SO_FAR : copy.MONEY.NET,
+    value: formatSignedMoney(net, currency),
+  });
   return { rows, hint: open ? copy.MONEY.NET_HINT : undefined };
 }
 
@@ -309,7 +307,11 @@ function getFeesPhrase(chargeback: ChargebackCase): string {
 function getLoseOutcome(chargeback: ChargebackCase, atStake: string): ArbitrationOutcome {
   const schedule = getArbitrationFeeSchedule(chargeback.network);
   if (!schedule) {
-    return { key: 'lose', label: dialogCopy.LOSE, value: dialogCopy.LOSE_VALUE_UNKNOWN_FEES(atStake) };
+    return {
+      key: 'lose',
+      label: dialogCopy.LOSE,
+      value: dialogCopy.LOSE_VALUE_UNKNOWN_FEES(atStake),
+    };
   }
   const whole = (amount: number) => formatWholeMoney(amount, chargeback.currency);
   const total = whole(getArbitrationFeeTotal(schedule));
@@ -372,7 +374,7 @@ function getDeadline(chargeback: ChargebackCase): string | undefined {
     return undefined;
   }
   const date = formatDate(chargeback.replyByDate);
-  return chargeback.status === 'decision-needed'
+  return chargeback.status === 'arbitration-decision-needed'
     ? copy.BANNER.DECISION_DEADLINE(date)
     : copy.BANNER.DEADLINE(date);
 }

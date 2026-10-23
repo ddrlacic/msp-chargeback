@@ -111,7 +111,7 @@
             size="small"
             class="shrink-0"
             [attr.aria-label]="copy.UPLOAD_LABEL(row.label)"
-            (click)="openUpload(row.type)"
+            (click)="openUpload(row.type, row.label)"
           >
             <lucide-icon
               name="upload"
@@ -224,7 +224,8 @@
 
 <app-case-upload-dialog
   [open]="dialogOpen()"
-  [presetType]="uploadType()"
+  [type]="uploadType()"
+  [title]="uploadTitle()"
   [existing]="existingFiles()"
   [maxFileBytes]="maxFileBytes()"
   (closed)="dialogOpen.set(false)"

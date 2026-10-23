@@ -143,13 +143,18 @@ describe('ChargebackRespondFlow', () => {
       expect(row?.documents.map((document) => document.name)).toEqual(['photo.png']);
     });
 
-    it('deletes a document that was never sent when it is removed', () => {
+    it('deletes a removed document that was never sent once the merchant saves', () => {
       fillIn();
       const [document] = flow.documents();
 
       flow.removeDocument(document.id);
 
       expect(flow.documents()).toEqual([]);
+      expect(flow.keptDocuments()).toEqual([]);
+      expect(store.getById('CB-261018')?.documents.length).toBe(1);
+
+      flow.saveAndExit();
+
       expect(store.getById('CB-261018')?.documents).toEqual([]);
     });
 
@@ -173,7 +178,7 @@ describe('ChargebackRespondFlow', () => {
   describe('saving a draft', () => {
     beforeEach(() => flow.init('CB-261018'));
 
-    it('saves the progress and sets the status to evidence required', () => {
+    it('saves the progress and sets the status to draft not submitted', () => {
       flow.reason.set('invalid-dispute');
       flow.amountChoice.set('partial');
       flow.amountText.set('40');
@@ -182,7 +187,7 @@ describe('ChargebackRespondFlow', () => {
       flow.saveAndExit();
       const chargeback = store.getById('CB-261018');
 
-      expect(chargeback?.status).toBe('evidence-required');
+      expect(chargeback?.status).toBe('draft-not-submitted');
       expect(chargeback?.draft).toEqual({
         savedAt: new Date(2026, 9, 22, 12).toISOString(),
         reason: 'invalid-dispute',
@@ -192,13 +197,19 @@ describe('ChargebackRespondFlow', () => {
       });
     });
 
-    it('saves the draft when the merchant leaves the flow', () => {
+    it('asks before leaving with changes and saves nothing on its own', () => {
       flow.reason.set('invalid-dispute');
+
+      expect(flow.tryLeave()).toBe(false);
 
       TestBed.resetTestingModule();
 
-      expect(store.getById('CB-261018')?.status).toBe('evidence-required');
-      expect(store.getById('CB-261018')?.draft?.reason).toBe('invalid-dispute');
+      expect(store.getById('CB-261018')?.status).toBe('action-required');
+      expect(store.getById('CB-261018')?.draft).toBe(undefined);
+    });
+
+    it('lets the merchant leave without asking when nothing was filled in', () => {
+      expect(flow.tryLeave()).toBe(true);
     });
 
     it('leaves the case alone when nothing was filled in', () => {
@@ -206,6 +217,18 @@ describe('ChargebackRespondFlow', () => {
 
       expect(store.getById('CB-261018')?.status).toBe('action-required');
       expect(store.getById('CB-261018')?.draft).toBe(undefined);
+    });
+
+    it('keeps the saved draft as it was when the changes are discarded', () => {
+      flow.init('CB-260987');
+      flow.upload({ type: 'invoice', files: [file('invoice.pdf')] });
+      flow.removeDocument('CB-260987-doc-1');
+
+      flow.discard();
+      const chargeback = store.getById('CB-260987');
+
+      expect(chargeback?.documents.map((document) => document.name)).toEqual(['receipt-57961.pdf']);
+      expect(chargeback?.draft?.documentIds).toEqual(['CB-260987-doc-1']);
     });
 
     it('does not save a draft for a returned response', () => {
@@ -240,8 +263,7 @@ describe('ChargebackRespondFlow', () => {
     });
 
     it('saves nothing when the merchant leaves without changes', () => {
-      TestBed.resetTestingModule();
-
+      expect(flow.tryLeave()).toBe(true);
       expect(store.getById('CB-260815')?.draft).toBe(undefined);
     });
 

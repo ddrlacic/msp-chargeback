@@ -30,11 +30,11 @@ describe('ChargebackStore', () => {
     expect(chargeback?.timeline.at(-1)?.title).toBe('You accepted the chargeback');
   });
 
-  it('saves a draft and marks the case as evidence required', () => {
+  it('saves a draft and marks the case as a draft not submitted', () => {
     store.saveDraft('CB-261022', { challengedAmount: 100, documentIds: [] });
     const chargeback = store.getById('CB-261022');
 
-    expect(chargeback?.status).toBe('evidence-required');
+    expect(chargeback?.status).toBe('draft-not-submitted');
     expect(chargeback?.draft).toEqual({
       challengedAmount: 100,
       documentIds: [],
@@ -204,7 +204,7 @@ describe('ChargebackStore', () => {
   });
 
   it('sets any status and updates the allowed actions', () => {
-    store.setStatus('CB-260876', 'decision-needed');
+    store.setStatus('CB-260876', 'arbitration-decision-needed');
 
     expect(store.getById('CB-260876')?.allowedActions).toEqual(['request-arbitration', 'accept']);
   });

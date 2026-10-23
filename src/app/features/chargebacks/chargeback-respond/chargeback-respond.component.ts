@@ -8,6 +8,7 @@ import {
   Injector,
   input,
   OnInit,
+  signal,
   viewChild,
 } from '@angular/core';
 import { Router } from '@angular/router';
@@ -19,8 +20,13 @@ import { ButtonDirective } from '../../../shared/components/button/button.direct
 import { formatDate } from '../../../shared/utils/date.utils';
 import { CHARGEBACKS_CONSTANTS } from '../chargebacks.constants';
 import { ChargebackRespondFlow } from './chargeback-respond.flow';
+import { ConfirmsLeave } from './chargeback-respond.guard';
 import { RESPOND_STEPS, RespondStep } from './chargeback-respond.utils';
 import { RespondEvidenceStepComponent } from './respond-evidence-step/respond-evidence-step.component';
+import {
+  LeaveChoice,
+  RespondLeaveDialogComponent,
+} from './respond-leave-dialog/respond-leave-dialog.component';
 import { RespondReasonStepComponent } from './respond-reason-step/respond-reason-step.component';
 import { RespondReviewStepComponent } from './respond-review-step/respond-review-step.component';
 import { RespondStepperComponent } from './respond-stepper/respond-stepper.component';
@@ -35,6 +41,7 @@ let nextRespondId = 0;
     LucideAngularModule,
     PageComponent,
     RespondEvidenceStepComponent,
+    RespondLeaveDialogComponent,
     RespondReasonStepComponent,
     RespondReviewStepComponent,
     RespondStepperComponent,
@@ -45,10 +52,11 @@ let nextRespondId = 0;
   templateUrl: './chargeback-respond.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
-export class ChargebackRespondComponent implements OnInit {
+export class ChargebackRespondComponent implements OnInit, ConfirmsLeave {
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private resolveLeave?: (leave: boolean) => void;
 
   protected readonly flow = inject(ChargebackRespondFlow);
 
@@ -89,9 +97,30 @@ export class ChargebackRespondComponent implements OnInit {
   });
 
   protected readonly canSaveDraft = computed(() => this.flow.mode() !== 'resubmit');
+  protected readonly leaveOpen = signal(false);
 
   ngOnInit(): void {
     this.flow.init(this.caseId());
+  }
+
+  confirmLeave(): boolean | Promise<boolean> {
+    if (this.flow.tryLeave()) {
+      return true;
+    }
+    this.resolveLeave?.(false);
+    this.leaveOpen.set(true);
+    return new Promise((resolve) => (this.resolveLeave = resolve));
+  }
+
+  protected onLeave(choice: LeaveChoice): void {
+    if (choice === 'save') {
+      this.flow.saveAndExit();
+    } else if (choice === 'discard') {
+      this.flow.discard();
+    }
+    this.leaveOpen.set(false);
+    this.resolveLeave?.(choice !== 'stay');
+    this.resolveLeave = undefined;
   }
 
   protected onNext(): void {
@@ -115,8 +144,6 @@ export class ChargebackRespondComponent implements OnInit {
   protected onExit(): void {
     if (this.canSaveDraft()) {
       this.flow.saveAndExit();
-    } else {
-      this.flow.discard();
     }
     void this.router.navigate(this.casePath());
   }

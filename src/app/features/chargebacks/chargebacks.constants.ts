@@ -20,10 +20,10 @@ export const CHARGEBACK_STATUS_COPY: Record<ChargebackStatus, ChargebackStatusCo
   'action-required': {
     label: 'Action required',
     message: 'Choose to accept or challenge the chargeback',
-    cta: 'Review and respond',
+    cta: 'Respond to chargeback',
   },
-  'evidence-required': {
-    label: 'Evidence required',
+  'draft-not-submitted': {
+    label: 'Draft not submitted',
     message: 'Finish your challenge and submit it before the due date',
     cta: 'Continue challenge',
   },
@@ -49,13 +49,14 @@ export const CHARGEBACK_STATUS_COPY: Record<ChargebackStatus, ChargebackStatusCo
   },
   'pre-arbitration-response-required': {
     label: 'Pre-arbitration response required',
-    message: 'The cardholder’s bank challenged your previous response. Review the case and respond.',
+    message:
+      'The cardholder’s bank challenged your previous response. Review the case and respond.',
     cta: 'Respond to pre-arbitration',
   },
-  'decision-needed': {
-    label: 'Decision needed',
+  'arbitration-decision-needed': {
+    label: 'Arbitration decision needed',
     message: 'Choose whether to take the case to arbitration. Fees apply if you lose.',
-    cta: 'Review options',
+    cta: 'Decide on arbitration',
   },
   arbitration: {
     label: 'Arbitration',
@@ -340,9 +341,6 @@ export const CHARGEBACKS_CONSTANTS = {
     },
     DOCUMENTS: {
       UPLOAD_DIALOG: {
-        TITLE: 'Upload documents',
-        TYPE: 'Document type',
-        TYPE_PLACEHOLDER: 'Select document type',
         DROP: 'Drag and drop to upload files or',
         CHOOSE: 'choose from files',
         HINT: (fileLimit: string) =>
@@ -351,7 +349,8 @@ export const CHARGEBACKS_CONSTANTS = {
         REMOVE: (name: string) => `Remove ${name}`,
         CANCEL: 'Cancel',
         SUBMIT: (count: number) => (count === 1 ? 'Upload document' : 'Upload documents'),
-        WRONG_TYPE: (name: string) => `Couldn’t add ${name}. Use a PDF, JPG, PNG, GIF, or TIF file.`,
+        WRONG_TYPE: (name: string) =>
+          `Couldn’t add ${name}. Use a PDF, JPG, PNG, GIF, or TIF file.`,
         TOO_MANY: 'A case can have up to 50 documents',
         TOO_LARGE: (name: string, limit: number) =>
           `Couldn’t add ${name}. Each file can be up to ${formatFileSize(limit)}.`,
@@ -441,6 +440,16 @@ export const CHARGEBACKS_CONSTANTS = {
       SAVE_AND_EXIT: 'Save and exit',
       CANCEL: 'Cancel',
       SUBMIT: 'Submit response',
+    },
+    LEAVE_DIALOG: {
+      SAVE_TITLE: 'Save draft?',
+      SAVE_DESCRIPTION:
+        'Nothing is sent to Worldpay until you submit. If you discard, you lose your changes.',
+      DISCARD_TITLE: 'Discard unsaved changes?',
+      DISCARD_DESCRIPTION: 'The case stays as Worldpay returned it',
+      CANCEL: 'Cancel',
+      DISCARD: 'Discard changes',
+      SAVE: 'Save draft',
     },
     NOTE: {
       TITLE: 'Note from Worldpay',

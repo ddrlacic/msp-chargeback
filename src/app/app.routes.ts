@@ -1,7 +1,10 @@
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Routes } from '@angular/router';
 
-import { chargebackRespondGuard } from './features/chargebacks/chargeback-respond/chargeback-respond.guard';
+import {
+  chargebackRespondGuard,
+  chargebackRespondLeaveGuard,
+} from './features/chargebacks/chargeback-respond/chargeback-respond.guard';
 import { getRespondTitle } from './features/chargebacks/chargeback-respond/chargeback-respond.utils';
 import { CHARGEBACKS_CONSTANTS, RESPOND_PATH } from './features/chargebacks/chargebacks.constants';
 import { getPlaceholderLinks } from './layout/app-sidebar/sidebar.constants';
@@ -46,6 +49,7 @@ export const routes: Routes = [
         title: (route: ActivatedRouteSnapshot) =>
           getRespondTitle(inject(ChargebackStore).getById(route.paramMap.get('caseId') ?? '')),
         canActivate: [chargebackRespondGuard],
+        canDeactivate: [chargebackRespondLeaveGuard],
         loadComponent: () =>
           import('./features/chargebacks/chargeback-respond/chargeback-respond.component').then(
             (m) => m.ChargebackRespondComponent,

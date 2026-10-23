@@ -1,0 +1,36 @@
+<app-dialog
+  [open]="open()"
+  [title]="title()"
+  [description]="description()"
+  (closed)="choose.emit('stay')"
+>
+  <button
+    type="button"
+    dialogActions
+    appButton="secondary"
+    data-action="stay"
+    (click)="choose.emit('stay')"
+  >
+    {{ copy.CANCEL }}
+  </button>
+  <button
+    type="button"
+    dialogActions
+    data-action="discard"
+    [appButton]="canSaveDraft() ? 'secondary' : 'destructive'"
+    (click)="choose.emit('discard')"
+  >
+    {{ copy.DISCARD }}
+  </button>
+  @if (canSaveDraft()) {
+    <button
+      type="button"
+      dialogActions
+      appButton="primary"
+      data-action="save"
+      (click)="choose.emit('save')"
+    >
+      {{ copy.SAVE }}
+    </button>
+  }
+</app-dialog>

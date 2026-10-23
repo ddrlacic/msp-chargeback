@@ -77,10 +77,13 @@ export class RespondEvidenceStepComponent {
 
   protected readonly dialogOpen = signal(false);
   protected readonly uploadType = signal<ChargebackDocumentType | undefined>(undefined);
+  protected readonly uploadTitle = signal('');
 
-  protected readonly maxFileBytes = computed(() => getMaxFileBytes(this.flow.chargeback()?.network));
+  protected readonly maxFileBytes = computed(() =>
+    getMaxFileBytes(this.flow.chargeback()?.network),
+  );
   protected readonly existingFiles = computed(() =>
-    (this.flow.chargeback()?.documents ?? []).map((document) => ({
+    this.flow.keptDocuments().map((document) => ({
       name: document.name,
       size: document.sizeBytes,
     })),
@@ -104,8 +107,9 @@ export class RespondEvidenceStepComponent {
     return this.flow.noDocuments() ? this.copy.NO_DOCUMENTS : undefined;
   });
 
-  protected openUpload(type: ChargebackDocumentType): void {
+  protected openUpload(type: ChargebackDocumentType, label: string): void {
     this.uploadType.set(type);
+    this.uploadTitle.set(this.copy.UPLOAD_LABEL(label));
     this.dialogOpen.set(true);
   }
 

@@ -227,7 +227,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
     },
     {
       caseId: 'CB-260987',
-      status: 'evidence-required',
+      status: 'draft-not-submitted',
       cycle: 'first-chargeback',
       network: 'discover',
       cardLastFour: '6011',
@@ -398,7 +398,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
     },
     {
       caseId: 'CB-260790',
-      status: 'decision-needed',
+      status: 'arbitration-decision-needed',
       cycle: 'pre-arbitration',
       network: 'mastercard',
       cardLastFour: '5299',
@@ -439,7 +439,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
     },
     {
       caseId: 'CB-260748',
-      status: 'decision-needed',
+      status: 'arbitration-decision-needed',
       cycle: 'pre-arbitration',
       network: 'visa',
       cardLastFour: '4556',

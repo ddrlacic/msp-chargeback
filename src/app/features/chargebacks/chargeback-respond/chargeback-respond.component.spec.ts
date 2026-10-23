@@ -229,8 +229,15 @@ describe('ChargebackRespondComponent', () => {
       click(element.querySelector('[data-evidence="delivery-proof"] button'));
 
       expect(dialog?.hasAttribute('open')).toBe(true);
-      expect(element.querySelector<HTMLSelectElement>('app-case-upload-dialog select')?.value).toBe(
-        'delivery-proof',
+      expect(text(dialog?.querySelector('h2'))).toBe('Upload delivery proof');
+      expect(element.querySelector('app-case-upload-dialog select')).toBe(null);
+    });
+
+    it('titles the upload dialog for other documents', () => {
+      click(element.querySelector('[data-evidence="other"] button'));
+
+      expect(text(element.querySelector('app-case-upload-dialog h2'))).toBe(
+        'Upload other documents',
       );
     });
 
@@ -359,21 +366,68 @@ describe('ChargebackRespondComponent', () => {
       click(action(element, 'exit'));
 
       expect(TestBed.inject(ChargebackStore).getById('CB-261018')?.status).toBe(
-        'evidence-required',
+        'draft-not-submitted',
       );
       expect(navigate).toHaveBeenCalledExactlyOnceWith(['/chargebacks', 'CB-261018']);
     });
 
-    it('saves the draft when the page closes some other way', () => {
-      const element = render('CB-261018');
-      click(action(element, 'next'));
-      choose(element, 'proof-of-purchase');
+    it('leaves without asking when nothing was filled in', () => {
+      render('CB-261018');
 
-      fixture.destroy();
+      expect(fixture.componentInstance.confirmLeave()).toBe(true);
+    });
 
-      expect(TestBed.inject(ChargebackStore).getById('CB-261018')?.draft?.reason).toBe(
-        'proof-of-purchase',
-      );
+    describe('another way with changes', () => {
+      let element: HTMLElement;
+      let leave: boolean | Promise<boolean>;
+      const dialog = () => element.querySelector('app-respond-leave-dialog dialog');
+
+      beforeEach(() => {
+        element = render('CB-261018');
+        click(action(element, 'next'));
+        choose(element, 'proof-of-purchase');
+        leave = fixture.componentInstance.confirmLeave();
+        fixture.detectChanges();
+      });
+
+      it('asks whether to save a draft', () => {
+        expect(dialog()?.hasAttribute('open')).toBe(true);
+        expect(text(dialog()?.querySelector('h2'))).toBe('Save draft?');
+        expect(text(dialog()?.querySelector('p'))).toBe(
+          'Nothing is sent to Worldpay until you submit. If you discard, you lose your changes.',
+        );
+        expect(
+          Array.from(dialog()?.querySelectorAll('button') ?? []).map((button) => text(button)),
+        ).toEqual(['Cancel', 'Discard changes', 'Save draft']);
+        expect(TestBed.inject(ChargebackStore).getById('CB-261018')?.draft).toBe(undefined);
+      });
+
+      it('saves the draft and leaves', async () => {
+        click(action(element, 'save'));
+
+        expect(await leave).toBe(true);
+        expect(TestBed.inject(ChargebackStore).getById('CB-261018')?.draft?.reason).toBe(
+          'proof-of-purchase',
+        );
+      });
+
+      it('discards the changes and leaves', async () => {
+        click(action(element, 'discard'));
+
+        expect(await leave).toBe(true);
+        expect(TestBed.inject(ChargebackStore).getById('CB-261018')?.status).toBe(
+          'action-required',
+        );
+        expect(TestBed.inject(ChargebackStore).getById('CB-261018')?.draft).toBe(undefined);
+      });
+
+      it('stays on the page when the merchant cancels', async () => {
+        click(action(element, 'stay'));
+
+        expect(await leave).toBe(false);
+        expect(dialog()?.hasAttribute('open')).toBe(false);
+        expect(heading(element)).toBe('Reason and amount');
+      });
     });
 
     it('resumes a saved draft at the step after the last complete one', () => {
@@ -462,6 +516,19 @@ describe('ChargebackRespondComponent', () => {
         'returned-by-worldpay',
       );
       expect(navigate).toHaveBeenCalledExactlyOnceWith(['/chargebacks', 'CB-260954']);
+    });
+
+    it('asks to discard changes instead of saving a draft', () => {
+      type(element.querySelector('textarea'), 'A clearer photo');
+
+      void fixture.componentInstance.confirmLeave();
+      fixture.detectChanges();
+      const dialog = element.querySelector('app-respond-leave-dialog dialog');
+
+      expect(text(dialog?.querySelector('h2'))).toBe('Discard unsaved changes?');
+      expect(
+        Array.from(dialog?.querySelectorAll('button') ?? []).map((button) => text(button)),
+      ).toEqual(['Cancel', 'Discard changes']);
     });
 
     it('resubmits with the old answers', () => {

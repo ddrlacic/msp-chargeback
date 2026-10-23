@@ -86,5 +86,11 @@
         </div>
       </div>
     </div>
+
+    <app-respond-leave-dialog
+      [open]="leaveOpen()"
+      [canSaveDraft]="canSaveDraft()"
+      (choose)="onLeave($event)"
+    />
   }
 </app-page>
