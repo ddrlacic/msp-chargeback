@@ -1,0 +1,72 @@
+<section class="rounded-md border p-4" [class]="tone().surface" [attr.aria-labelledby]="titleId">
+  <div class="flex gap-3">
+    <span class="mt-px shrink-0" [class]="tone().iconColor" aria-hidden="true">
+      <lucide-icon
+        class="block size-5"
+        [name]="tone().icon"
+        [size]="20"
+        [strokeWidth]="1.5"
+        [absoluteStrokeWidth]="true"
+      />
+    </span>
+    <div class="min-w-0 flex-1">
+      <h2 class="text-body font-semibold text-pretty text-ink" [id]="titleId">
+        {{ banner().title }}
+      </h2>
+      @if (banner().detail; as detail) {
+        <p class="text-pretty text-ink-strong tabular-nums">{{ detail }}</p>
+      }
+      @if (banner().draft; as draft) {
+        <p class="text-pretty text-ink-strong tabular-nums">
+          {{ draft.saved }}. {{ draft.content }}.
+        </p>
+      }
+      @if (banner().deadline; as deadline) {
+        <p class="text-pretty text-ink-strong tabular-nums">{{ deadline }}</p>
+      }
+      @if (banner().note; as note) {
+        <figure class="mt-3 rounded-sm bg-white px-3 py-2">
+          <figcaption class="text-small font-semibold text-ink-muted">
+            {{ copy.BANNER.WORLDPAY_NOTE }}
+          </figcaption>
+          <blockquote class="mt-0.5 text-pretty text-ink">{{ note }}</blockquote>
+        </figure>
+      }
+    </div>
+  </div>
+
+  @if (banner().actions.length) {
+    <div class="mt-4 flex flex-col-reverse gap-2 @md:flex-row @md:justify-end">
+      @for (item of banner().actions; track item.action) {
+        <button
+          type="button"
+          [appButton]="item.primary ? 'primary' : 'secondary'"
+          [attr.data-action]="item.action"
+          (click)="action.emit(item.action)"
+        >
+          {{ item.label }}
+        </button>
+      }
+    </div>
+  }
+</section>
+
+@if (banner().options.length) {
+  <ul class="grid gap-3 @xl:grid-cols-2" [attr.aria-label]="copy.OPTIONS.LABEL">
+    @for (option of banner().options; track option.action) {
+      <li class="flex flex-col rounded-md border border-line bg-white p-4">
+        <h3 class="text-body font-semibold">{{ option.label }}</h3>
+        <p class="mt-1 mb-4 text-pretty text-ink-muted">{{ option.description }}</p>
+        <button
+          type="button"
+          class="mt-auto self-start"
+          [appButton]="option.primary ? 'primary' : 'secondary'"
+          [attr.data-action]="option.action"
+          (click)="action.emit(option.action)"
+        >
+          {{ option.label }}
+        </button>
+      </li>
+    }
+  </ul>
+}

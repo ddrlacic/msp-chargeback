@@ -1,10 +1,12 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { CLOCK } from '../../shared/clock';
-import { createChargebackFixtures } from './chargeback.fixtures';
+import { createChargebackFixtures, FIXTURE_BRAND } from './chargeback.fixtures';
 import {
   ChallengeDraft,
   ChargebackCase,
+  ChargebackDocument,
+  ChargebackDocumentType,
   ChargebackStatus,
   TimelineEvent,
 } from './chargeback.types';
@@ -17,18 +19,61 @@ export interface SubmitResponseInput {
 
 export type SaveDraftInput = Omit<ChallengeDraft, 'savedAt'>;
 
+export interface DocumentUploadInput {
+  readonly name: string;
+  readonly sizeBytes: number;
+}
+
+export const DOCUMENT_SCAN_MS = 2500;
+
 type TimelineEventInput = Omit<TimelineEvent, 'id' | 'occurredAt' | 'cycle'>;
 
 @Injectable({ providedIn: 'root' })
 export class ChargebackStore {
   private readonly clock = inject(CLOCK);
   private readonly state = signal<readonly ChargebackCase[]>(this.createInitialCases());
+  private uploadCount = 0;
 
   readonly cases = this.state.asReadonly();
   readonly count = computed(() => this.state().length);
 
   getById(caseId: string): ChargebackCase | undefined {
     return this.state().find((chargeback) => chargeback.caseId === caseId);
+  }
+
+  uploadDocuments(
+    caseId: string,
+    type: ChargebackDocumentType,
+    files: readonly DocumentUploadInput[],
+  ): readonly string[] {
+    const createdDateTime = this.clock.now().toISOString();
+    const documents: ChargebackDocument[] = files.map((file) => ({
+      id: `${caseId}-upload-${++this.uploadCount}`,
+      name: file.name,
+      type,
+      sizeBytes: file.sizeBytes,
+      securityStatus: 'scanning',
+      uploadedBy: FIXTURE_BRAND.userName,
+      createdDateTime,
+    }));
+    const ids = documents.map((document) => document.id);
+    this.updateCase(caseId, (chargeback) => ({
+      ...chargeback,
+      documents: [...chargeback.documents, ...documents],
+    }));
+    setTimeout(() => this.finishScan(caseId, ids), DOCUMENT_SCAN_MS);
+    return ids;
+  }
+
+  deleteDocument(caseId: string, documentId: string): void {
+    this.updateCase(caseId, (chargeback) => ({
+      ...chargeback,
+      documents: chargeback.documents.filter((document) => document.id !== documentId),
+      draft: chargeback.draft && {
+        ...chargeback.draft,
+        documentIds: chargeback.draft.documentIds.filter((id) => id !== documentId),
+      },
+    }));
   }
 
   acceptChargeback(caseId: string): void {
@@ -88,6 +133,17 @@ export class ChargebackStore {
 
   private createInitialCases(): readonly ChargebackCase[] {
     return createChargebackFixtures(this.clock.now());
+  }
+
+  private finishScan(caseId: string, documentIds: readonly string[]): void {
+    this.updateCase(caseId, (chargeback) => ({
+      ...chargeback,
+      documents: chargeback.documents.map((document) =>
+        documentIds.includes(document.id) && document.securityStatus === 'scanning'
+          ? { ...document, securityStatus: 'clean' }
+          : document,
+      ),
+    }));
   }
 
   private updateCase(caseId: string, update: (chargeback: ChargebackCase) => ChargebackCase): void {

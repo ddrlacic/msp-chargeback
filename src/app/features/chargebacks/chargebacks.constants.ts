@@ -1,5 +1,6 @@
 import {
   CardNetwork,
+  ChargebackAction,
   ChargebackColorState,
   ChargebackDocumentType,
   ChargebackStatus,
@@ -88,6 +89,15 @@ export const CHARGEBACK_STATUS_COPY: Record<ChargebackStatus, ChargebackStatusCo
     message: 'No response was sent by the due date. The chargeback stands.',
     cta: 'View details',
   },
+};
+
+export const CHARGEBACK_ACTION_LABELS: Record<ChargebackAction, string> = {
+  accept: 'Accept chargeback',
+  challenge: 'Challenge chargeback',
+  'continue-challenge': 'Continue challenge',
+  resubmit: 'Fix and resubmit',
+  'respond-pre-arbitration': 'Respond to pre-arbitration',
+  'request-arbitration': 'Request arbitration',
 };
 
 export const CHARGEBACK_STATE_LABELS: Record<ChargebackColorState, string> = {
@@ -218,11 +228,106 @@ export const CHARGEBACKS_CONSTANTS = {
     NOT_FOUND_TITLE: 'Case not found',
     NOT_FOUND_MESSAGE: 'Check the link, or go back to the chargeback list',
     BACK_TO_LIST: 'Go to chargebacks',
-    STATUS: 'Status',
-    AMOUNT: 'Amount',
-    REASON: 'Reason',
-    LOCATION: 'Location',
-    DUE: 'Respond by',
+    HEADER: {
+      AMOUNT: 'Disputed amount',
+      DUE: 'Respond by',
+      CARD: (network: string, lastFour: string) => `${network} •••• ${lastFour}`,
+      CARD_LABEL: (network: string, lastFour: string) => `${network} ending in ${lastFour}`,
+    },
+    BANNER: {
+      DEADLINE: (date: string) => `Respond by ${date}, or the chargeback stands`,
+      DECISION_DEADLINE: (date: string) => `Decide by ${date}, or the chargeback stands`,
+      DRAFT_SAVED: (dateTime: string) => `Draft saved ${dateTime}`,
+      DRAFT_CONTENT: (amount: string, documents: number) =>
+        `Challenging ${amount} with ${countLabel(documents, 'document', 'documents')}`,
+      WORLDPAY_NOTE: 'Note from Worldpay',
+      PARTIALLY_WON: (returned: string, challenged: string) =>
+        `${returned} of ${challenged} is returned to your account`,
+    },
+    OPTIONS: {
+      LABEL: 'Your options',
+      ACCEPT_DESCRIPTION: (amount: string) =>
+        `${amount} stays charged and the case closes. You cannot undo this.`,
+      CHALLENGE_DESCRIPTION:
+        'Send evidence that the payment was valid. Worldpay reviews it and passes it on to the cardholder’s bank.',
+      ARBITRATION_DESCRIPTION: (fees: string) =>
+        `The card network makes the final decision. If you lose, ${fees}.`,
+      FEES_UP_TO: (amount: string) => `fees of up to ${amount} apply`,
+      FEES_FROM: (amount: string) => `fees of ${amount} or more apply`,
+      FEES: 'fees apply',
+    },
+    DETAILS: {
+      TITLE: 'Case details',
+      CASE_ID: 'Case ID',
+      REASON: 'Reason',
+      REASON_CODE: (code: string) => `Reason code ${code}`,
+      CARD: 'Card',
+      TRANSACTION: 'Transaction',
+      ORDER: 'Order',
+      TRANSACTION_DATE: 'Transaction date',
+      TRANSACTION_AMOUNT: 'Transaction amount',
+      RECEIVED: 'Received',
+      LOCATION: 'Location',
+      LEGAL_ENTITY: 'Legal entity',
+    },
+    MONEY: {
+      TITLE: 'Amounts',
+      DISPUTED: 'Disputed',
+      CHALLENGED: 'Challenged',
+      DEBITED: 'Debited',
+      CREDITED: 'Credited back',
+      NET: 'Net',
+      NET_SO_FAR: 'Net so far',
+      NET_HINT: 'Final when the case closes',
+    },
+    DOCUMENTS: {
+      TITLE: 'Documents',
+      UPLOAD: 'Upload documents',
+      LIST: 'Case documents',
+      EMPTY_TITLE: 'No documents',
+      EMPTY_MESSAGE:
+        'Upload receipts, delivery proof, or messages with the customer to support your response',
+      UPLOADED: (date: string, by: string) => `Uploaded ${date} by ${by}`,
+      SENT: (date: string) => `Sent to Worldpay ${date}`,
+      SCANNING: 'Scanning',
+      REJECTED: 'Blocked by the security scan',
+      UPLOAD_FAILED: 'Upload failed',
+      PREVIEW: (name: string) => `Preview ${name}`,
+      DOWNLOAD: (name: string) => `Download ${name}`,
+      DELETE: (name: string) => `Delete ${name}`,
+      UPLOADED_ANNOUNCEMENT: (count: number) =>
+        count === 1 ? 'Document successfully uploaded' : `${count} documents successfully uploaded`,
+      DELETED_ANNOUNCEMENT: 'Document deleted',
+      DELETE_DIALOG: {
+        TITLE: 'Delete document?',
+        MESSAGE: (name: string) => `${name} will be deleted from this case. This cannot be undone.`,
+        CANCEL: 'Cancel',
+        CONFIRM: 'Delete document',
+      },
+      UPLOAD_DIALOG: {
+        TITLE: 'Upload documents',
+        TYPE: 'Document type',
+        TYPE_PLACEHOLDER: 'Select document type',
+        DROP: 'Drag and drop to upload files or',
+        CHOOSE: 'choose from files',
+        HINT: 'PDF, JPG, or PNG. Up to 5 files, 30 MB in total.',
+        FILES: 'Files to upload',
+        REMOVE: (name: string) => `Remove ${name}`,
+        CANCEL: 'Cancel',
+        SUBMIT: (count: number) => (count === 1 ? 'Upload document' : 'Upload documents'),
+        WRONG_TYPE: (name: string) => `Couldn’t add ${name}. Use a PDF, JPG, or PNG file.`,
+        TOO_MANY: 'You can upload up to 5 files at a time',
+        TOO_LARGE: (name: string) => `Couldn’t add ${name}. Files can be up to 30 MB in total.`,
+      },
+      SAMPLE: {
+        TITLE: 'Sample document',
+        CASE: (caseId: string) => `Case ${caseId}`,
+        NOTE: 'This file is fake data in the MSP chargeback prototype.',
+      },
+    },
+    TIMELINE: {
+      TITLE: 'Timeline',
+    },
   },
   DUE_DATE: {
     DAYS_LEFT: (days: number) => (days === 1 ? '1 day left' : `${days} days left`),

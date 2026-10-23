@@ -1,0 +1,21 @@
+<section [attr.aria-labelledby]="titleId">
+  <h2 class="border-b border-line pb-3 text-h3" [id]="titleId">{{ copy.TITLE }}</h2>
+  <dl class="mt-4 grid gap-x-6 gap-y-3 @md:grid-cols-2">
+    @for (row of rows(); track row.key) {
+      <div class="min-w-0" [attr.data-row]="row.key">
+        <dt class="text-small text-ink-muted">{{ row.label }}</dt>
+        <dd class="text-pretty break-words text-ink tabular-nums">
+          @if (row.valueLabel; as label) {
+            <span aria-hidden="true">{{ row.value }}</span>
+            <span class="sr-only">{{ label }}</span>
+          } @else {
+            {{ row.value }}
+          }
+        </dd>
+        @if (row.secondary; as secondary) {
+          <dd class="text-small text-ink-muted tabular-nums">{{ secondary }}</dd>
+        }
+      </div>
+    }
+  </dl>
+</section>

@@ -183,8 +183,7 @@
               }
             </td>
             <td [class]="cellClass" class="text-right tabular-nums">
-              <span class="text-ink-subtle">{{ item.amount.symbol }}</span
-              >{{ item.amount.value }}
+              {{ item.amount.symbol }}{{ item.amount.value }}
             </td>
             <td [class]="cellClass">
               <span class="block truncate" [title]="item.row.reason">{{ item.row.reason }}</span>

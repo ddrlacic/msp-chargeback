@@ -14,6 +14,8 @@ const DATE_TIME_FORMAT = new Intl.DateTimeFormat('en-US', {
   minute: '2-digit',
 });
 
+const TIME_FORMAT = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' });
+
 export function toIsoDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -50,4 +52,8 @@ export function formatDate(value: string): string {
 
 export function formatDateTime(value: string): string {
   return DATE_TIME_FORMAT.format(new Date(value));
+}
+
+export function formatDateAtTime(value: string): string {
+  return `${formatDate(value)} at ${TIME_FORMAT.format(new Date(value))}`;
 }

@@ -21,6 +21,11 @@ export function formatMoneyParts(amount: number, currency: string): MoneyParts {
   };
 }
 
+export function formatSignedMoney(amount: number, currency: string): string {
+  const formatted = formatMoney(Math.abs(amount), currency);
+  return amount < 0 ? `\u2212${formatted}` : formatted;
+}
+
 function getFormatter(currency: string): Intl.NumberFormat {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency });
 }

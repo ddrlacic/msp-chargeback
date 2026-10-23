@@ -4,18 +4,25 @@ import { RouterLink } from '@angular/router';
 import { CHARGEBACKS_PATH } from '../../../layout/app-sidebar/sidebar.constants';
 import { PageBreadcrumb, PageComponent } from '../../../layout/page/page.component';
 import { ChargebackStore } from '../../../services/chargeback/chargeback.store';
-import {
-  getResponseWindowDays,
-  isNeedsAction,
-} from '../../../services/chargeback/chargeback.utils';
-import { formatMoney } from '../../../shared/utils/money.utils';
 import { CHARGEBACKS_CONSTANTS } from '../chargebacks.constants';
-import { ChargebackDueDateComponent } from '../shared/chargeback-due-date/chargeback-due-date.component';
-import { ChargebackStatusBadgeComponent } from '../shared/chargeback-status-badge/chargeback-status-badge.component';
+import { CaseDetailsComponent } from './case-details/case-details.component';
+import { CaseDocumentsComponent } from './case-documents/case-documents.component';
+import { CaseHeaderComponent } from './case-header/case-header.component';
+import { CaseMoneyComponent } from './case-money/case-money.component';
+import { CaseStatusBannerComponent } from './case-status-banner/case-status-banner.component';
+import { getTimelineRows } from './chargeback-case.utils';
 
 @Component({
   selector: 'app-chargeback-case',
-  imports: [ChargebackDueDateComponent, ChargebackStatusBadgeComponent, PageComponent, RouterLink],
+  imports: [
+    CaseDetailsComponent,
+    CaseDocumentsComponent,
+    CaseHeaderComponent,
+    CaseMoneyComponent,
+    CaseStatusBannerComponent,
+    PageComponent,
+    RouterLink,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './chargeback-case.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
@@ -27,6 +34,7 @@ export class ChargebackCaseComponent {
 
   protected readonly copy = CHARGEBACKS_CONSTANTS.CASE;
   protected readonly chargebacksPath = CHARGEBACKS_PATH;
+  protected readonly timelineId = 'case-timeline-title';
 
   protected readonly chargeback = computed(() => this.store.getById(this.caseId()));
 
@@ -39,16 +47,8 @@ export class ChargebackCaseComponent {
     { label: this.chargeback() ? this.caseId() : this.copy.NOT_FOUND_TITLE },
   ]);
 
-  protected readonly amount = computed(() => {
+  protected readonly timeline = computed(() => {
     const chargeback = this.chargeback();
-    return chargeback ? formatMoney(chargeback.chargebackAmount, chargeback.currency) : '';
-  });
-
-  protected readonly dueDate = computed(() => {
-    const chargeback = this.chargeback();
-    if (!chargeback?.replyByDate || !isNeedsAction(chargeback.status)) {
-      return undefined;
-    }
-    return { date: chargeback.replyByDate, windowDays: getResponseWindowDays(chargeback) };
+    return chargeback ? getTimelineRows(chargeback) : [];
   });
 }

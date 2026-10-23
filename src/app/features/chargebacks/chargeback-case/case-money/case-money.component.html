@@ -1,0 +1,18 @@
+<section [attr.aria-labelledby]="titleId">
+  <h2 class="border-b border-line pb-3 text-h3" [id]="titleId">{{ copy.TITLE }}</h2>
+  <dl>
+    @for (row of summary().rows; track row.key; let last = $last) {
+      <div
+        class="flex items-baseline justify-between gap-4 py-2"
+        [class]="last ? 'font-semibold' : 'border-b border-line'"
+        [attr.data-row]="row.key"
+      >
+        <dt [class]="last ? 'text-ink' : 'text-ink-muted'">{{ row.label }}</dt>
+        <dd class="text-right text-ink tabular-nums">{{ row.value }}</dd>
+      </div>
+    }
+  </dl>
+  @if (summary().hint; as hint) {
+    <p class="text-small text-ink-muted">{{ hint }}</p>
+  }
+</section>

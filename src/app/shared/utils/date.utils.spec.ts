@@ -2,6 +2,7 @@ import {
   addDays,
   differenceInCalendarDays,
   formatDate,
+  formatDateAtTime,
   parseIsoDate,
   toIsoDate,
 } from './date.utils';
@@ -26,5 +27,11 @@ describe('date utils', () => {
 
   it('formats a date as a short US date', () => {
     expect(formatDate('2026-10-30')).toBe('Oct 30, 2026');
+  });
+
+  it('joins the date and the time with "at"', () => {
+    expect(formatDateAtTime(new Date(2026, 9, 21, 16, 24).toISOString())).toBe(
+      'Oct 21, 2026 at 4:24 PM',
+    );
   });
 });
