@@ -1,6 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
-
 import { CLOCK } from '../../../../shared/clock';
 import { DueDateTone, getDueDateInfo } from './chargeback-due-date.utils';
 
@@ -12,7 +10,6 @@ const TONE_CLASSES: Record<DueDateTone, string> = {
 
 @Component({
   selector: 'app-chargeback-due-date',
-  imports: [LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './chargeback-due-date.component.html',
   host: {
@@ -34,9 +31,4 @@ export class ChargebackDueDateComponent {
   protected readonly toneClass = computed(
     () => `${TONE_CLASSES[this.info().tone]} ${this.remainingSize() === 'body' ? 'text-body' : 'text-small'}`,
   );
-  protected readonly iconSize = computed(() => (this.remainingSize() === 'body' ? 14 : 12));
-  protected readonly iconClass = computed(() =>
-    this.remainingSize() === 'body' ? 'size-3.5' : 'size-3',
-  );
-  protected readonly iconStroke = computed(() => (this.layout() === 'inline' ? 1 : 1.5));
 }

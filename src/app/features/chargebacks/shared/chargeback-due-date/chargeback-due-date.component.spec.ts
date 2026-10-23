@@ -42,6 +42,16 @@ describe('ChargebackDueDateComponent', () => {
     const element = render('2026-10-25', 20);
 
     expect(element.dataset['tone']).toBe('soon');
-    expect(element.querySelector('lucide-icon')?.getAttribute('name')).toBe('clock');
+    expect(element.querySelector('lucide-icon')).toBe(null);
+  });
+
+  it('separates the date and days left with a dot in the inline layout', () => {
+    const fixture = TestBed.createComponent(ChargebackDueDateComponent);
+    fixture.componentRef.setInput('date', '2026-11-15');
+    fixture.componentRef.setInput('layout', 'inline');
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.textContent?.replace(/\s+/g, ' ').trim()).toBe('Nov 15, 2026 · 24 days left');
   });
 });

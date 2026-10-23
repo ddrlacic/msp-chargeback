@@ -1,34 +1,11 @@
 <time
   class="flex tabular-nums"
-  [class]="layout() === 'inline' ? 'items-baseline gap-2 whitespace-nowrap' : 'flex-col'"
+  [class]="layout() === 'inline' ? 'items-center gap-1 whitespace-nowrap' : 'flex-col'"
   [attr.datetime]="date()"
 >
-  <span class="text-body text-ink">{{ info().dateLabel }}</span>
-  <span class="flex items-center gap-1" [class]="toneClass()">
-    @switch (info().tone) {
-      @case ('soon') {
-        <lucide-icon
-          name="clock"
-          class="shrink-0"
-          [class]="iconClass()"
-          [size]="iconSize()"
-          [strokeWidth]="iconStroke()"
-          [absoluteStrokeWidth]="true"
-          aria-hidden="true"
-        />
-      }
-      @case ('overdue') {
-        <lucide-icon
-          name="circle-alert"
-          class="shrink-0"
-          [class]="iconClass()"
-          [size]="iconSize()"
-          [strokeWidth]="iconStroke()"
-          [absoluteStrokeWidth]="true"
-          aria-hidden="true"
-        />
-      }
-    }
-    <span class="self-baseline">&#32;{{ info().remainingLabel }}</span>
-  </span>
+  <span class="text-body text-ink">{{ info().dateLabel }}&#32;</span>
+  @if (layout() === 'inline') {
+    <span class="text-body text-ink-muted" aria-hidden="true">·&#32;</span>
+  }
+  <span [class]="toneClass()">{{ info().remainingLabel }}</span>
 </time>
