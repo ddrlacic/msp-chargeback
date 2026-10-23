@@ -7,21 +7,21 @@ import { ChargebackStore } from '../../../services/chargeback/chargeback.store';
 import { CHARGEBACKS_CONSTANTS } from '../chargebacks.constants';
 import { CaseDeadlineComponent } from './case-deadline/case-deadline.component';
 import { CaseDetailsComponent } from './case-details/case-details.component';
-import { CaseDocumentsComponent } from './case-documents/case-documents.component';
 import { CaseHeaderComponent } from './case-header/case-header.component';
 import { CaseMoneyComponent } from './case-money/case-money.component';
 import { CaseStatusBannerComponent } from './case-status-banner/case-status-banner.component';
-import { getCaseDeadline, getTimelineRows } from './chargeback-case.utils';
+import { CaseTimelineComponent } from './case-timeline/case-timeline.component';
+import { getCaseDeadline } from './chargeback-case.utils';
 
 @Component({
   selector: 'app-chargeback-case',
   imports: [
     CaseDeadlineComponent,
     CaseDetailsComponent,
-    CaseDocumentsComponent,
     CaseHeaderComponent,
     CaseMoneyComponent,
     CaseStatusBannerComponent,
+    CaseTimelineComponent,
     PageComponent,
     RouterLink,
   ],
@@ -36,7 +36,6 @@ export class ChargebackCaseComponent {
 
   protected readonly copy = CHARGEBACKS_CONSTANTS.CASE;
   protected readonly chargebacksPath = CHARGEBACKS_PATH;
-  protected readonly timelineId = 'case-timeline-title';
 
   protected readonly chargeback = computed(() => this.store.getById(this.caseId()));
 
@@ -52,10 +51,5 @@ export class ChargebackCaseComponent {
   protected readonly deadline = computed(() => {
     const chargeback = this.chargeback();
     return chargeback ? getCaseDeadline(chargeback) : undefined;
-  });
-
-  protected readonly timeline = computed(() => {
-    const chargeback = this.chargeback();
-    return chargeback ? getTimelineRows(chargeback) : [];
   });
 }

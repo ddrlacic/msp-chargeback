@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
-import { ChargebackStore } from '../../../services/chargeback/chargeback.store';
 import { installDialogPolyfill } from '../../../testing/dialog';
 import { getTestProviders } from '../../../testing/providers';
 import { ChargebackCaseComponent } from './chargeback-case.component';
@@ -107,37 +106,25 @@ describe('ChargebackCaseComponent', () => {
     ]);
   });
 
-  it('lists documents to preview and download without upload or delete', () => {
-    const documents = render('CB-260987').querySelector('app-case-documents');
+  it('shows the timeline in the main column, oldest event first', () => {
+    const timeline = render('CB-260655').querySelector('app-case-timeline');
+    const events = timeline?.querySelectorAll('[data-event]') ?? [];
 
-    expect(documents?.querySelectorAll('li[data-document]').length).toBe(1);
-    expect(documents?.querySelector('[aria-label="Download receipt-57961.pdf"]')).not.toBe(null);
-    expect(documents?.querySelectorAll('button').length).toBe(2);
+    expect(text(timeline?.querySelector('h2'))).toBe('Timeline');
+    expect(events.length).toBe(3);
+    expect(text(events[0].querySelector('p'))).toBe('Chargeback received');
+    expect(text(events[2].querySelector('p'))).toBe('Resolved in your favor');
   });
 
-  it('blocks download while a document is scanned', () => {
-    const element = render('CB-260987');
-    TestBed.inject(ChargebackStore).uploadDocuments('CB-260987', 'transaction-receipt', [
-      { name: 'receipt.pdf', sizeBytes: 1200 },
-    ]);
-    fixture.detectChanges();
-
-    const row = element.querySelectorAll('li[data-document]')[1];
-    expect(text(row?.querySelector('[data-status]'))).toBe('Scanning');
-    expect(row?.querySelector<HTMLButtonElement>('[aria-label^="Download"]')?.disabled).toBe(true);
-  });
-
-  it('hides documents when the case has none', () => {
-    expect(render('CB-261018').querySelector('app-case-documents')).toBe(null);
-  });
-
-  it('lists the timeline newest first', () => {
-    const items = render('CB-260655').querySelectorAll(
-      '[aria-labelledby="case-timeline-title"] ol > li',
+  it('offers a small secondary button on the pending row', () => {
+    const button = render('CB-261018').querySelector<HTMLElement>(
+      'app-case-timeline [data-pending] button',
     );
 
-    expect(text(items[0].querySelector('p'))).toBe('Resolved in your favor');
-    expect(items.length).toBe(3);
+    expect(text(button)).toBe('Challenge chargeback');
+    expect(button?.classList.contains('h-7')).toBe(true);
+    expect(button?.classList.contains('bg-white')).toBe(true);
+    expect(button?.classList.contains('bg-brand-primary')).toBe(false);
   });
 
   it('shows a not found state for an unknown case', () => {

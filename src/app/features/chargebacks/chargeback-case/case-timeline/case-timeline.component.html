@@ -1,0 +1,134 @@
+<section [attr.aria-labelledby]="titleId">
+  <h2 class="border-b border-line pb-3 text-h3" [id]="titleId">{{ copy.TITLE }}</h2>
+
+  <ol class="mt-4" [attr.aria-labelledby]="titleId">
+    @for (row of rows(); track row.id; let last = $last) {
+      <li class="flex gap-3" [attr.data-event]="row.id" [attr.data-tone]="row.tone">
+        <div class="flex w-5 shrink-0 flex-col items-center">
+          <span
+            class="mt-px grid size-5 shrink-0 place-items-center rounded-full"
+            [class]="row.halo"
+            aria-hidden="true"
+          >
+            @if (row.isOutcome) {
+              <lucide-icon
+                class="block size-3 text-white"
+                [name]="row.icon"
+                [size]="12"
+                [strokeWidth]="2"
+                [absoluteStrokeWidth]="true"
+              />
+            } @else {
+              <span class="size-2.5 rounded-full" [class]="row.dot"></span>
+            }
+          </span>
+          @if (!last || pending()) {
+            <span
+              class="my-1 min-h-4 flex-1"
+              [class]="
+                last && pending()
+                  ? 'w-0 border-l border-dashed border-line-strong'
+                  : 'w-px bg-line-strong'
+              "
+              aria-hidden="true"
+            ></span>
+          }
+        </div>
+        <div class="min-w-0 flex-1" [class.pb-5]="!last || pending()">
+          <div class="flex flex-wrap items-baseline justify-between gap-x-4">
+            <p class="grow basis-64 font-semibold text-pretty text-ink">{{ row.title }}</p>
+            <time
+              class="shrink-0 text-small text-ink-muted tabular-nums"
+              [attr.datetime]="row.occurredAt"
+              >{{ row.date }}</time
+            >
+          </div>
+          <p class="text-small text-ink-muted">{{ row.meta }}</p>
+          @if (row.description; as description) {
+            <p class="mt-1 text-pretty text-ink-strong">{{ description }}</p>
+          }
+          @if (row.money; as money) {
+            <p class="mt-1 text-ink tabular-nums">{{ money }}</p>
+          }
+          @if (row.documents.length) {
+            <ul class="mt-1 flex flex-col items-start" [attr.aria-label]="copy.DOCUMENTS">
+              @for (item of row.documents; track item.document.id) {
+                <li class="max-w-full">
+                  @if (item.canOpen) {
+                    <button
+                      type="button"
+                      class="-ml-2 inline-flex h-8 max-w-full items-center gap-1.5 rounded-md px-2 text-left text-ink transition-[background-color] duration-200 ease-in-out hover:bg-hover active:bg-pressed pointer-coarse:h-11"
+                      [attr.aria-label]="item.label"
+                      (click)="preview(item.document)"
+                    >
+                      <span class="shrink-0 text-ink-subtle" aria-hidden="true">
+                        <lucide-icon
+                          class="block size-4"
+                          [name]="item.icon"
+                          [size]="16"
+                          [strokeWidth]="1.5"
+                          [absoluteStrokeWidth]="true"
+                        />
+                      </span>
+                      <span class="truncate" [title]="item.document.name">{{
+                        item.document.name
+                      }}</span>
+                    </button>
+                  } @else {
+                    <span
+                      class="-ml-2 inline-flex h-8 max-w-full items-center gap-1.5 px-2 text-ink-muted"
+                    >
+                      <span class="shrink-0" aria-hidden="true">
+                        <lucide-icon
+                          class="block size-4"
+                          [name]="item.icon"
+                          [size]="16"
+                          [strokeWidth]="1.5"
+                          [absoluteStrokeWidth]="true"
+                        />
+                      </span>
+                      <span class="truncate" [title]="item.document.name">{{
+                        item.document.name
+                      }}</span>
+                    </span>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </li>
+    }
+    @if (pending(); as pendingRow) {
+      <li class="flex gap-3" data-pending [attr.data-tone]="pendingRow.tone" aria-current="step">
+        <div class="flex w-5 shrink-0 flex-col items-center">
+          <span
+            class="mt-px grid size-5 shrink-0 place-items-center rounded-full"
+            [class]="pendingRow.halo"
+            aria-hidden="true"
+          >
+            <span class="size-2.5 rounded-full" [class]="pendingRow.dot"></span>
+          </span>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="font-semibold text-pretty text-ink">{{ pendingRow.title }}</p>
+          @if (pendingRow.detail; as detail) {
+            <p class="text-ink-strong tabular-nums">{{ detail }}</p>
+          }
+          @if (pendingRow.action; as pendingAction) {
+            <button
+              type="button"
+              class="mt-2"
+              appButton="secondary"
+              size="small"
+              [attr.data-action]="pendingAction.action"
+              (click)="action.emit(pendingAction.action)"
+            >
+              {{ pendingAction.label }}
+            </button>
+          }
+        </div>
+      </li>
+    }
+  </ol>
+</section>

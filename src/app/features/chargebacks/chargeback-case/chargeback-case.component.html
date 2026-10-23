@@ -2,14 +2,14 @@
   @if (chargeback(); as chargeback) {
     <div class="@container">
       <div
-        class="flex flex-col gap-6 @4xl:grid @4xl:grid-cols-[minmax(0,1fr)_20rem] @4xl:grid-rows-[auto_auto_auto_1fr] @4xl:gap-x-8"
+        class="flex flex-col gap-6 @4xl:grid @4xl:grid-cols-[minmax(0,1fr)_20rem] @4xl:grid-rows-[auto_auto_1fr] @4xl:gap-x-8"
       >
         <app-case-header class="@4xl:col-span-2" [chargeback]="chargeback" />
 
         <app-case-status-banner class="@4xl:col-start-1" [chargeback]="chargeback" />
 
         <div
-          class="flex flex-col gap-6 @4xl:col-start-2 @4xl:row-span-3 @4xl:row-start-2 @4xl:self-start"
+          class="flex flex-col gap-6 @4xl:col-start-2 @4xl:row-span-2 @4xl:row-start-2 @4xl:self-start"
         >
           @if (deadline(); as deadline) {
             <app-case-deadline [deadline]="deadline" />
@@ -18,35 +18,7 @@
           <app-case-details [chargeback]="chargeback" />
         </div>
 
-        @if (chargeback.documents.length) {
-          <app-case-documents class="@4xl:col-start-1" [chargeback]="chargeback" />
-        }
-
-        <section class="@4xl:col-start-1 @4xl:self-start" [attr.aria-labelledby]="timelineId">
-          <h2 class="border-b border-line pb-3 text-h3" [id]="timelineId">
-            {{ copy.TIMELINE.TITLE }}
-          </h2>
-          <ol>
-            @for (event of timeline(); track event.id) {
-              <li
-                class="flex items-baseline justify-between gap-4 border-b border-line py-3 last:border-b-0"
-              >
-                <div class="min-w-0">
-                  <p class="text-pretty text-ink">{{ event.title }}</p>
-                  <p class="text-small text-ink-muted tabular-nums">
-                    <time [attr.datetime]="event.occurredAt">{{ event.date }}</time>
-                    @if (event.worldpayTerm; as term) {
-                      · {{ term }}
-                    }
-                  </p>
-                </div>
-                @if (event.amount; as amount) {
-                  <span class="shrink-0 text-ink tabular-nums">{{ amount }}</span>
-                }
-              </li>
-            }
-          </ol>
-        </section>
+        <app-case-timeline class="@4xl:col-start-1 @4xl:self-start" [chargeback]="chargeback" />
       </div>
     </div>
   } @else {

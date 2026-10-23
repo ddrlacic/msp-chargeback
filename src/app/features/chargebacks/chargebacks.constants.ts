@@ -41,12 +41,12 @@ export const CHARGEBACK_STATUS_COPY: Record<ChargebackStatus, ChargebackStatusCo
   },
   'pre-arbitration': {
     label: 'Pre-arbitration',
-    message: 'The issuer challenged your response. Worldpay is handling it.',
+    message: 'The cardholder’s bank challenged your response. Worldpay is handling it.',
     cta: 'View timeline',
   },
   'pre-arbitration-response-required': {
     label: 'Pre-arbitration response required',
-    message: 'The issuer challenged your previous response. Review the case and respond.',
+    message: 'The cardholder’s bank challenged your previous response. Review the case and respond.',
     cta: 'Respond to pre-arbitration',
   },
   'decision-needed': {
@@ -71,7 +71,7 @@ export const CHARGEBACK_STATUS_COPY: Record<ChargebackStatus, ChargebackStatusCo
   },
   'dispute-withdrawn': {
     label: 'Dispute withdrawn',
-    message: 'The issuer withdrew the dispute',
+    message: 'The cardholder’s bank withdrew the dispute',
     cta: 'View details',
   },
   lost: {
@@ -285,15 +285,6 @@ export const CHARGEBACKS_CONSTANTS = {
       NET_HINT: 'Final when the case closes',
     },
     DOCUMENTS: {
-      TITLE: 'Documents',
-      LIST: 'Case documents',
-      UPLOADED: (date: string, by: string) => `Uploaded ${date} by ${by}`,
-      SENT: (date: string) => `Sent to Worldpay ${date}`,
-      SCANNING: 'Scanning',
-      REJECTED: 'Blocked by the security scan',
-      UPLOAD_FAILED: 'Upload failed',
-      PREVIEW: (name: string) => `Preview ${name}`,
-      DOWNLOAD: (name: string) => `Download ${name}`,
       UPLOAD_DIALOG: {
         TITLE: 'Upload documents',
         TYPE: 'Document type',
@@ -317,6 +308,30 @@ export const CHARGEBACKS_CONSTANTS = {
     },
     TIMELINE: {
       TITLE: 'Timeline',
+      ACTORS: {
+        merchant: 'You',
+        worldpay: 'Worldpay',
+        'cardholder-bank': 'Cardholder’s bank',
+        'card-network': 'Card network',
+      },
+      PENDING: {
+        RESPONSE_NEEDED: 'Your response is needed',
+        DECISION_NEEDED: 'Your decision is needed',
+        RETURNED: 'Worldpay returned your response',
+        SENT_TO_BANK: 'Worldpay is sending your response to the cardholder’s bank',
+        UNDER_REVIEW: 'Waiting for the cardholder’s bank to decide',
+        HANDLING_CHALLENGE: 'Worldpay is handling the challenge',
+        WAITING_FOR_NETWORK: 'Waiting for the card network’s final decision',
+        RESPOND_BY: (date: string) => `Respond by ${date}`,
+        RESUBMIT_BY: (date: string) => `Resubmit by ${date}`,
+        DECIDE_BY: (date: string) => `Decide by ${date}`,
+      },
+      MONEY: {
+        DEBITED: (amount: string) => `${amount} debited`,
+        CREDITED: (amount: string) => `${amount} credited back`,
+      },
+      DOCUMENTS: 'Documents sent',
+      PREVIEW: (name: string) => `Preview ${name}`,
     },
   },
   DUE_DATE: {

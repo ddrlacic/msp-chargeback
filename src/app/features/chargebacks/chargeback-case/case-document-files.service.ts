@@ -22,13 +22,6 @@ export class CaseDocumentFilesService {
     this.document.defaultView?.open(url, '_blank');
   }
 
-  download(caseId: string, chargebackDocument: ChargebackDocument): void {
-    const link = this.document.createElement('a');
-    link.href = this.createUrl(caseId, chargebackDocument);
-    link.download = chargebackDocument.name;
-    link.click();
-  }
-
   private createUrl(caseId: string, chargebackDocument: ChargebackDocument): string {
     const url = URL.createObjectURL(this.getFile(caseId, chargebackDocument));
     setTimeout(() => URL.revokeObjectURL(url), URL_LIFETIME_MS);

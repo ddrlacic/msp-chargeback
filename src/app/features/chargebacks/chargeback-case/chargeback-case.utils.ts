@@ -3,7 +3,6 @@ import {
   ChargebackAction,
   ChargebackCase,
   ChargebackColorState,
-  ChargebackDocument,
   ChargebackStatus,
 } from '../../../services/chargeback/chargeback.types';
 import {
@@ -13,13 +12,11 @@ import {
   roundMoney,
 } from '../../../services/chargeback/chargeback.utils';
 import { formatDate, formatDateAtTime } from '../../../shared/utils/date.utils';
-import { formatFileSize } from '../../../shared/utils/file.utils';
 import { formatMoney, formatSignedMoney } from '../../../shared/utils/money.utils';
 import {
   CARD_NETWORK_LABELS,
   CARD_NETWORK_LOGOS,
   CHARGEBACK_ACTION_LABELS,
-  CHARGEBACK_DOCUMENT_TYPE_LABELS,
   CHARGEBACK_STATUS_COPY,
   CHARGEBACKS_CONSTANTS,
 } from '../chargebacks.constants';
@@ -92,27 +89,6 @@ export interface DetailRow {
   readonly secondary?: string;
   readonly valueLabel?: string;
   readonly logo?: string;
-}
-
-export type DocumentStatusTone = 'scanning' | 'error';
-
-export interface DocumentRow {
-  readonly document: ChargebackDocument;
-  readonly typeLabel: string;
-  readonly size: string;
-  readonly dateLabel: string;
-  readonly status?: { readonly label: string; readonly tone: DocumentStatusTone };
-  readonly sent: boolean;
-  readonly canOpen: boolean;
-}
-
-export interface TimelineRow {
-  readonly id: string;
-  readonly title: string;
-  readonly worldpayTerm?: string;
-  readonly date: string;
-  readonly occurredAt: string;
-  readonly amount?: string;
 }
 
 export function getOutstandingAmount(chargeback: ChargebackCase): number {
@@ -248,38 +224,6 @@ export function getCaseDetails(chargeback: ChargebackCase): readonly DetailRow[]
   ];
 }
 
-export function getDocumentRows(chargeback: ChargebackCase): readonly DocumentRow[] {
-  const sentAt = getSentDates(chargeback);
-  return chargeback.documents.map((document) => {
-    const sent = sentAt.get(document.id);
-    return {
-      document,
-      typeLabel: CHARGEBACK_DOCUMENT_TYPE_LABELS[document.type],
-      size: formatFileSize(document.sizeBytes),
-      dateLabel: sent
-        ? copy.DOCUMENTS.SENT(formatDate(sent))
-        : copy.DOCUMENTS.UPLOADED(formatDate(document.createdDateTime), document.uploadedBy),
-      status: getDocumentStatus(document),
-      sent: sent !== undefined,
-      canOpen: document.securityStatus === 'clean',
-    };
-  });
-}
-
-export function getTimelineRows(chargeback: ChargebackCase): readonly TimelineRow[] {
-  return [...chargeback.timeline].reverse().map((event) => ({
-    id: event.id,
-    title: event.title,
-    worldpayTerm: event.worldpayTerm,
-    date: formatDateAtTime(event.occurredAt),
-    occurredAt: event.occurredAt,
-    amount:
-      event.amountChange === undefined
-        ? undefined
-        : formatSignedMoney(event.amountChange, chargeback.currency),
-  }));
-}
-
 function getCaseActions(chargeback: ChargebackCase): CaseAction[] {
   const primary = chargeback.allowedActions[0];
   return [...chargeback.allowedActions].reverse().map((action) => ({
@@ -342,34 +286,6 @@ function getDraftSummary(chargeback: ChargebackCase): CaseDraftSummary | undefin
       draft.documentIds.length,
     ),
   };
-}
-
-function getSentDates(chargeback: ChargebackCase): Map<string, string> {
-  const sent = new Map<string, string>();
-  for (const event of chargeback.timeline) {
-    if (event.actor !== 'merchant') {
-      continue;
-    }
-    for (const id of event.documentIds ?? []) {
-      if (!sent.has(id)) {
-        sent.set(id, event.occurredAt);
-      }
-    }
-  }
-  return sent;
-}
-
-function getDocumentStatus(document: ChargebackDocument): DocumentRow['status'] {
-  switch (document.securityStatus) {
-    case 'scanning':
-      return { label: copy.DOCUMENTS.SCANNING, tone: 'scanning' };
-    case 'rejected':
-      return { label: copy.DOCUMENTS.REJECTED, tone: 'error' };
-    case 'upload-failed':
-      return { label: copy.DOCUMENTS.UPLOAD_FAILED, tone: 'error' };
-    default:
-      return undefined;
-  }
 }
 
 function isOpen(status: ChargebackStatus): boolean {

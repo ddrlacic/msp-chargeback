@@ -70,7 +70,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
     cycle: 'first-chargeback',
     actor: 'cardholder-bank',
     title: 'Chargeback received',
-    worldpayTerm: network === 'visa' ? 'Dispute' : 'First Chargeback',
+    worldpayTerm: network === 'visa' ? 'Dispute' : 'First chargeback',
     description: 'The cardholder’s bank disputed this payment',
     amountChange: -amount,
   });
@@ -97,11 +97,11 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
     worldpayTerm: 'Representment',
   });
 
-  const preArbitrationFiled = (offset: number, worldpayTerm = 'Pre-Arbitration'): TimelineSeed => ({
+  const preArbitrationFiled = (offset: number, worldpayTerm = 'Pre-arbitration'): TimelineSeed => ({
     occurredAt: at(offset, 10, 48),
     cycle: 'pre-arbitration',
     actor: 'cardholder-bank',
-    title: 'The issuer challenged your response',
+    title: 'The cardholder’s bank challenged your response',
     worldpayTerm,
   });
 
@@ -234,7 +234,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
           cycle: 'first-chargeback',
           actor: 'worldpay',
           title: 'Worldpay returned your response',
-          worldpayTerm: 'Request Declined',
+          worldpayTerm: 'Request declined',
           description:
             'The delivery photo is hard to read. Upload a clearer copy that shows the delivery address and time.',
         },
@@ -311,13 +311,13 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       challengedAmount: 129.99,
       amountDebited: 129.99,
       amountCredited: 129.99,
+      documents: [
+        doc('CB-260843', 1, 'delivery-photo.jpg', 'delivery-proof', 482_304, at(-28, 14, 20)),
+      ],
       timeline: [
         received(-40, 129.99, 'discover'),
-        responseSent(-28, 129.99),
-        {
-          ...preArbitrationFiled(-5),
-          description: 'Worldpay is handling it',
-        },
+        responseSent(-28, 129.99, ['CB-260843-doc-1']),
+        preArbitrationFiled(-5),
       ],
     },
     {
@@ -337,9 +337,10 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       challengedAmount: 176.5,
       amountDebited: 176.5,
       amountCredited: 0,
+      documents: [doc('CB-260815', 1, 'order-57102.pdf', 'invoice', 127_488, at(-33, 14, 20))],
       timeline: [
         received(-45, 176.5, 'visa'),
-        responseSent(-33),
+        responseSent(-33, undefined, ['CB-260815-doc-1']),
         forwarded(-32),
         preArbitrationFiled(-5),
       ],
@@ -361,12 +362,22 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       challengedAmount: 312,
       amountDebited: 624,
       amountCredited: 312,
+      documents: [
+        doc('CB-260790', 1, 'order-56877.pdf', 'invoice', 133_120, at(-45, 14, 20)),
+        doc(
+          'CB-260790',
+          2,
+          'customer-emails.pdf',
+          'customer-communication',
+          205_824,
+          at(-45, 14, 24),
+        ),
+      ],
       timeline: [
         received(-60, 312, 'mastercard'),
-        responseSent(-45, 312),
+        responseSent(-45, 312, ['CB-260790-doc-1', 'CB-260790-doc-2']),
         {
-          ...preArbitrationFiled(-26, 'Arbitration Chargeback'),
-          description: 'The amount was debited again',
+          ...preArbitrationFiled(-26, 'Arbitration chargeback'),
           amountChange: -312,
         },
       ],
@@ -387,17 +398,27 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       challengedAmount: 250,
       amountDebited: 250,
       amountCredited: 0,
+      documents: [
+        doc(
+          'CB-260702',
+          1,
+          'delivery-confirmation.pdf',
+          'delivery-proof',
+          121_856,
+          at(-65, 14, 20),
+        ),
+      ],
       timeline: [
         received(-80, 250, 'visa'),
-        responseSent(-65),
+        responseSent(-65, undefined, ['CB-260702-doc-1']),
         forwarded(-64),
         preArbitrationFiled(-40),
         {
           occurredAt: at(-34, 9, 40),
           cycle: 'pre-arbitration',
           actor: 'cardholder-bank',
-          title: 'The issuer declined your pre-arbitration response',
-          worldpayTerm: 'Issuer Declined Pre-Arbitration',
+          title: 'The cardholder’s bank declined your pre-arbitration response',
+          worldpayTerm: 'Issuer declined pre-arbitration',
         },
         {
           occurredAt: at(-30, 15, 18),
@@ -425,15 +446,26 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       challengedAmount: 74.25,
       amountDebited: 74.25,
       amountCredited: 74.25,
+      documents: [
+        doc('CB-260655', 1, 'receipt-56933.pdf', 'transaction-receipt', 148_480, at(-38, 14, 20)),
+        doc(
+          'CB-260655',
+          2,
+          'signed-authorization.pdf',
+          'authorization-proof',
+          96_256,
+          at(-38, 14, 22),
+        ),
+      ],
       timeline: [
         received(-50, 74.25, 'mastercard'),
-        responseSent(-38, 74.25),
+        responseSent(-38, 74.25, ['CB-260655-doc-1', 'CB-260655-doc-2']),
         {
           occurredAt: at(-10, 8, 55),
           cycle: 'first-chargeback',
           actor: 'cardholder-bank',
           title: 'Resolved in your favor',
-          worldpayTerm: 'Chargeback Reversal',
+          worldpayTerm: 'Chargeback reversal',
         },
       ],
     },
@@ -453,9 +485,20 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       challengedAmount: 198,
       amountDebited: 198,
       amountCredited: 120,
+      documents: [
+        doc('CB-260611', 1, 'order-55620.pdf', 'invoice', 131_072, at(-104, 14, 20)),
+        doc(
+          'CB-260611',
+          2,
+          'customer-emails.pdf',
+          'customer-communication',
+          210_944,
+          at(-104, 14, 24),
+        ),
+      ],
       timeline: [
         received(-120, 198, 'visa'),
-        responseSent(-104),
+        responseSent(-104, undefined, ['CB-260611-doc-1', 'CB-260611-doc-2']),
         forwarded(-103),
         preArbitrationFiled(-80),
         {
@@ -470,7 +513,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
           cycle: 'arbitration',
           actor: 'card-network',
           title: 'Partially resolved in your favor',
-          worldpayTerm: 'Arbitration Split',
+          worldpayTerm: 'Arbitration split',
           amountChange: 120,
         },
       ],
@@ -491,15 +534,18 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       challengedAmount: 39.8,
       amountDebited: 39.8,
       amountCredited: 39.8,
+      documents: [
+        doc('CB-260588', 1, 'delivery-confirmation.pdf', 'delivery-proof', 118_784, at(-7, 14, 20)),
+      ],
       timeline: [
         received(-12, 39.8, 'amex'),
-        responseSent(-7, 39.8),
+        responseSent(-7, 39.8, ['CB-260588-doc-1']),
         {
           occurredAt: at(-3, 10, 14),
           cycle: 'first-chargeback',
           actor: 'cardholder-bank',
-          title: 'The issuer withdrew the dispute',
-          worldpayTerm: 'Issuer Recalled',
+          title: 'The cardholder’s bank withdrew the dispute',
+          worldpayTerm: 'Issuer recalled',
         },
       ],
     },
@@ -519,16 +565,20 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
       challengedAmount: 155.4,
       amountDebited: 310.8,
       amountCredited: 155.4,
+      documents: [
+        doc('CB-260540', 1, 'receipt-56154.pdf', 'transaction-receipt', 144_384, at(-50, 14, 20)),
+        doc('CB-260540', 2, 'terms-of-sale.pdf', 'terms-and-conditions', 86_016, at(-50, 14, 23)),
+      ],
       timeline: [
         received(-70, 155.4, 'discover'),
-        responseSent(-50, 155.4),
+        responseSent(-50, 155.4, ['CB-260540-doc-1', 'CB-260540-doc-2']),
         preArbitrationFiled(-30),
         {
           occurredAt: at(-8, 9, 30),
           cycle: 'pre-arbitration',
           actor: 'cardholder-bank',
           title: 'Resolved in the cardholder’s favor',
-          worldpayTerm: 'Unsuccessful Pre-Arbitration',
+          worldpayTerm: 'Unsuccessful pre-arbitration',
           amountChange: -155.4,
         },
       ],
@@ -555,7 +605,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
           cycle: 'first-chargeback',
           actor: 'merchant',
           title: 'You accepted the chargeback',
-          worldpayTerm: 'Merchant Accepts Liability',
+          worldpayTerm: 'Merchant accepts liability',
         },
       ],
     },
@@ -581,7 +631,7 @@ export function createChargebackFixtures(today: Date): ChargebackCase[] {
           cycle: 'first-chargeback',
           actor: 'worldpay',
           title: 'No response was sent by the due date',
-          worldpayTerm: 'Merchant Assumed',
+          worldpayTerm: 'Merchant assumed',
         },
       ],
     },

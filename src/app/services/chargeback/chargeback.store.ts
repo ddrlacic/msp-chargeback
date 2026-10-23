@@ -87,7 +87,7 @@ export class ChargebackStore {
         {
           actor: 'merchant',
           title: 'You accepted the chargeback',
-          worldpayTerm: 'Merchant Accepts Liability',
+          worldpayTerm: 'Merchant accepts liability',
         },
       ),
     );

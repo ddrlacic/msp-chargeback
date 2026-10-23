@@ -6,10 +6,8 @@ import {
   getCaseDeadline,
   getCaseDetails,
   getCaseHeader,
-  getDocumentRows,
   getMoneySummary,
   getOutstandingAmount,
-  getTimelineRows,
 } from './chargeback-case.utils';
 
 const cases = createChargebackFixtures(TEST_TODAY);
@@ -196,58 +194,4 @@ describe('chargeback case utils', () => {
     expect(card?.logo).toBe('card-networks/visa.svg');
   });
 
-  describe('documents', () => {
-    it('labels documents that were sent with a response', () => {
-      const [row] = getDocumentRows(getCase('CB-260954'));
-
-      expect(row.sent).toBe(true);
-      expect(row.dateLabel).toBe('Sent to Worldpay Oct 13, 2026');
-      expect(row.canOpen).toBe(true);
-    });
-
-    it('labels draft documents with who uploaded them', () => {
-      const [row] = getDocumentRows(getCase('CB-260987'));
-
-      expect(row).toEqual({
-        document: getCase('CB-260987').documents[0],
-        typeLabel: 'Transaction receipt',
-        size: '180 KB',
-        dateLabel: 'Uploaded Oct 21, 2026 by Alex Morgan',
-        status: undefined,
-        sent: false,
-        canOpen: true,
-      });
-    });
-
-    it('blocks opening documents that are scanning or rejected', () => {
-      const chargeback = getCase('CB-260987');
-      const [scanning, rejected] = getDocumentRows({
-        ...chargeback,
-        documents: [
-          { ...chargeback.documents[0], id: 'scan', securityStatus: 'scanning' },
-          { ...chargeback.documents[0], id: 'bad', securityStatus: 'rejected' },
-        ],
-      });
-
-      expect([scanning.status, scanning.canOpen]).toEqual([
-        { label: 'Scanning', tone: 'scanning' },
-        false,
-      ]);
-      expect([rejected.status, rejected.canOpen]).toEqual([
-        { label: 'Blocked by the security scan', tone: 'error' },
-        false,
-      ]);
-    });
-  });
-
-  it('lists timeline events newest first with signed amounts', () => {
-    const rows = getTimelineRows(getCase('CB-260655'));
-
-    expect(rows.map((row) => [row.title, row.worldpayTerm, row.amount])).toEqual([
-      ['Resolved in your favor', 'Chargeback Reversal', undefined],
-      ['Response sent to Worldpay', 'Represent', '$74.25'],
-      ['Chargeback received', 'First Chargeback', '\u2212$74.25'],
-    ]);
-    expect(rows[0].date).toBe('Oct 12, 2026 at 8:55 AM');
-  });
 });
