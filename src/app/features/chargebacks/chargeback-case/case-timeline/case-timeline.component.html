@@ -45,53 +45,16 @@
           </div>
           <p class="text-small text-ink-muted">{{ row.meta }}</p>
           @if (row.description; as description) {
-            <p class="mt-1 text-pretty text-ink-strong">{{ description }}</p>
+            <p class="mt-1 max-w-prose text-pretty text-ink-strong">{{ description }}</p>
           }
           @if (row.money; as money) {
             <p class="mt-1 text-ink tabular-nums">{{ money }}</p>
           }
           @if (row.documents.length) {
             <ul class="mt-1 flex flex-col items-start" [attr.aria-label]="copy.DOCUMENTS">
-              @for (item of row.documents; track item.document.id) {
-                <li class="-ml-2 max-w-full">
-                  @if (item.canOpen) {
-                    <button
-                      type="button"
-                      class="inline-flex h-8 max-w-full items-center gap-1.5 rounded-md px-2 text-left text-ink transition-[background-color] duration-200 ease-in-out hover:bg-hover active:bg-pressed pointer-coarse:h-11"
-                      [attr.aria-label]="item.label"
-                      (click)="preview(item.document)"
-                    >
-                      <span class="shrink-0 text-ink-subtle" aria-hidden="true">
-                        <lucide-icon
-                          class="block size-4"
-                          [name]="item.icon"
-                          [size]="16"
-                          [strokeWidth]="1.5"
-                          [absoluteStrokeWidth]="true"
-                        />
-                      </span>
-                      <span class="truncate" [title]="item.document.name">{{
-                        item.document.name
-                      }}</span>
-                    </button>
-                  } @else {
-                    <span
-                      class="inline-flex h-8 max-w-full items-center gap-1.5 px-2 text-ink-muted"
-                    >
-                      <span class="shrink-0" aria-hidden="true">
-                        <lucide-icon
-                          class="block size-4"
-                          [name]="item.icon"
-                          [size]="16"
-                          [strokeWidth]="1.5"
-                          [absoluteStrokeWidth]="true"
-                        />
-                      </span>
-                      <span class="truncate" [title]="item.document.name">{{
-                        item.document.name
-                      }}</span>
-                    </span>
-                  }
+              @for (document of row.documents; track document.id) {
+                <li class="max-w-full">
+                  <app-document-chip [document]="document" (open)="preview($event)" />
                 </li>
               }
             </ul>

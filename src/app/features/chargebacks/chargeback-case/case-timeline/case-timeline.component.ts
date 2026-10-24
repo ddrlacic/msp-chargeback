@@ -8,6 +8,7 @@ import {
 } from '../../../../services/chargeback/chargeback.types';
 import { ButtonDirective } from '../../../../shared/components/button/button.directive';
 import { CHARGEBACKS_CONSTANTS } from '../../chargebacks.constants';
+import { DocumentChipComponent } from '../../shared/document-chip/document-chip.component';
 import { CaseDocumentFilesService } from '../case-document-files.service';
 import { getPendingRow, getTimelineRows, MarkerTone } from './case-timeline.utils';
 
@@ -31,7 +32,7 @@ let nextTimelineId = 0;
 
 @Component({
   selector: 'app-case-timeline',
-  imports: [ButtonDirective, LucideAngularModule],
+  imports: [ButtonDirective, DocumentChipComponent, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './case-timeline.component.html',
   host: { class: '@container relative block' },

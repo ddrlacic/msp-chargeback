@@ -116,33 +116,18 @@ describe('case timeline utils', () => {
       const rows = getTimelineRows(getCase('CB-260921'));
       const last = rows[rows.length - 1];
 
-      expect(
-        last.documents.map((item) => [item.document.name, item.icon, item.label, item.canOpen]),
-      ).toEqual([
-        ['receipt-57890.pdf', 'file-text', 'Preview receipt-57890.pdf', true],
-        ['signed-authorization.pdf', 'file-text', 'Preview signed-authorization.pdf', true],
+      expect(last.documents.map((document) => document.name)).toEqual([
+        'receipt-57890.pdf',
+        'signed-authorization.pdf',
       ]);
       expect(rows[rows.length - 2].documents).toEqual([]);
-    });
-
-    it('blocks opening a document until the security scan passes', () => {
-      const chargeback = getCase('CB-260921');
-      const rows = getTimelineRows({
-        ...chargeback,
-        documents: chargeback.documents.map((document) => ({
-          ...document,
-          securityStatus: 'scanning',
-        })),
-      });
-
-      expect(rows[rows.length - 1].documents.map((item) => item.canOpen)).toEqual([false, false]);
     });
 
     it('skips documents that no longer exist on the case', () => {
       const chargeback = getCase('CB-260921');
       const rows = getTimelineRows({ ...chargeback, documents: [chargeback.documents[0]] });
 
-      expect(rows[rows.length - 1].documents.map((item) => item.document.name)).toEqual([
+      expect(rows[rows.length - 1].documents.map((document) => document.name)).toEqual([
         'receipt-57890.pdf',
       ]);
     });

@@ -1,15 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 
-import {
-  ChargebackDocument,
-  ChargebackDocumentType,
-} from '../../../../services/chargeback/chargeback.types';
+import { ChargebackDocumentType } from '../../../../services/chargeback/chargeback.types';
 import { ButtonDirective } from '../../../../shared/components/button/button.directive';
 import { formatDate, formatDateAtTime } from '../../../../shared/utils/date.utils';
-import { formatFileSize, isImageFile } from '../../../../shared/utils/file.utils';
+import { formatFileSize } from '../../../../shared/utils/file.utils';
 import {
-  CHARGEBACK_DOCUMENT_STATUS_LABELS,
   CHARGEBACK_DOCUMENT_TYPE_LABELS,
   CHARGEBACKS_CONSTANTS,
 } from '../../chargebacks.constants';
@@ -18,6 +14,7 @@ import {
   DocumentUploadRequest,
 } from '../../chargeback-case/case-upload-dialog/case-upload-dialog.component';
 import { getMaxFileBytes } from '../../chargeback-case/case-upload-dialog/case-upload-dialog.utils';
+import { DocumentChipComponent } from '../../shared/document-chip/document-chip.component';
 import { ChargebackRespondFlow } from '../chargeback-respond.flow';
 import { getPreviousResponse } from '../chargeback-respond.utils';
 
@@ -25,7 +22,7 @@ let nextEvidenceStepId = 0;
 
 @Component({
   selector: 'app-respond-evidence-step',
-  imports: [ButtonDirective, CaseUploadDialogComponent, LucideAngularModule],
+  imports: [ButtonDirective, CaseUploadDialogComponent, DocumentChipComponent, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './respond-evidence-step.component.html',
   host: { class: 'flex flex-col gap-6' },
@@ -68,8 +65,6 @@ export class RespondEvidenceStepComponent {
         files: response.documents.map((document) => ({
           document,
           details: `${CHARGEBACK_DOCUMENT_TYPE_LABELS[document.type]} · ${formatFileSize(document.sizeBytes)}`,
-          icon: isImageFile(document.name) ? 'file-image' : 'file-text',
-          canOpen: document.securityStatus === 'clean',
         })),
       }
     );
@@ -93,7 +88,10 @@ export class RespondEvidenceStepComponent {
     this.flow.evidenceRows().map((row) => ({
       ...row,
       done: row.documents.length > 0,
-      files: row.documents.map((document) => this.toFile(document)),
+      files: row.documents.map((document) => ({
+        document,
+        size: formatFileSize(document.sizeBytes),
+      })),
     })),
   );
 
@@ -120,18 +118,5 @@ export class RespondEvidenceStepComponent {
 
   protected onNote(event: Event): void {
     this.flow.note.set((event.target as HTMLTextAreaElement).value);
-  }
-
-  private toFile(document: ChargebackDocument) {
-    const status = CHARGEBACK_DOCUMENT_STATUS_LABELS[document.securityStatus];
-    return {
-      document,
-      size: formatFileSize(document.sizeBytes),
-      icon: isImageFile(document.name) ? 'file-image' : 'file-text',
-      status,
-      scanning: document.securityStatus === 'scanning',
-      failed: document.securityStatus === 'rejected' || document.securityStatus === 'upload-failed',
-      canOpen: document.securityStatus === 'clean',
-    };
   }
 }

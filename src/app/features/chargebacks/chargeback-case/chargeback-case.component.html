@@ -13,17 +13,17 @@
         />
 
         <div
-          class="flex flex-col gap-6 @4xl:col-start-2 @4xl:row-span-2 @4xl:row-start-2 @4xl:self-start"
+          class="contents @4xl:col-start-2 @4xl:row-span-2 @4xl:row-start-2 @4xl:flex @4xl:flex-col @4xl:gap-6 @4xl:self-start"
         >
           @if (deadline(); as deadline) {
-            <app-case-deadline [deadline]="deadline" />
+            <app-case-deadline class="order-1 @4xl:order-none" [deadline]="deadline" />
           }
-          <app-case-money [chargeback]="chargeback" />
-          <app-case-details [chargeback]="chargeback" />
+          <app-case-money class="order-3 @4xl:order-none" [chargeback]="chargeback" />
+          <app-case-details class="order-4 @4xl:order-none" [chargeback]="chargeback" />
         </div>
 
         <app-case-timeline
-          class="@4xl:col-start-1 @4xl:self-start"
+          class="order-2 @4xl:order-none @4xl:col-start-1 @4xl:self-start"
           [chargeback]="chargeback"
           (action)="onAction($event)"
         />

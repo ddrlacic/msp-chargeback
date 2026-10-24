@@ -391,7 +391,6 @@ export const CHARGEBACKS_CONSTANTS = {
         FEES: (amount: string) => `${amount} arbitration fees debited`,
       },
       DOCUMENTS: 'Documents sent',
-      PREVIEW: (name: string) => `Preview ${name}`,
     },
   },
   ACCEPT_DIALOG: {
@@ -501,8 +500,6 @@ export const CHARGEBACKS_CONSTANTS = {
       UPLOAD: 'Upload',
       UPLOAD_LABEL: (type: string) => `Upload ${type.toLowerCase()}`,
       FILES: (type: string) => `${type} files`,
-      REMOVE: (name: string) => `Remove ${name}`,
-      PREVIEW: (name: string) => `Preview ${name}`,
       ADDED: 'Added',
       NOTE_LABEL: 'Note (optional)',
       NOTE_HINT: 'Tell Worldpay anything the documents do not show',
@@ -533,5 +530,9 @@ export const CHARGEBACKS_CONSTANTS = {
     DAYS_LEFT: (days: number) => (days === 1 ? '1 day left' : `${days} days left`),
     DUE_TODAY: 'Due today',
     OVERDUE: (days: number) => (days === 1 ? '1 day overdue' : `${days} days overdue`),
+  },
+  DOCUMENT_CHIP: {
+    PREVIEW: (name: string) => `Preview ${name}`,
+    REMOVE: (name: string) => `Remove ${name}`,
   },
 } as const;

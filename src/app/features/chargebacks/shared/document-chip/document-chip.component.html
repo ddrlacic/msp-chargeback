@@ -1,0 +1,61 @@
+<span class="shrink-0 text-ink-subtle" aria-hidden="true">
+  <lucide-icon
+    class="block size-4"
+    [name]="state().icon"
+    [size]="16"
+    [strokeWidth]="1.5"
+    [absoluteStrokeWidth]="true"
+  />
+</span>
+@if (state().canOpen) {
+  <button
+    type="button"
+    class="inline-flex min-w-0 items-center text-left text-ink after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-accent-100"
+    data-preview
+    [title]="document().name"
+    [attr.aria-label]="copy.PREVIEW(document().name)"
+    (click)="open.emit(document())"
+  >
+    <span class="truncate">{{ document().name }}</span>
+  </button>
+} @else {
+  <span class="min-w-0 truncate text-ink-muted" [title]="document().name">{{
+    document().name
+  }}</span>
+}
+@if (details(); as text) {
+  <span class="shrink-0 text-small text-ink-muted tabular-nums">{{ text }}</span>
+}
+@if (state().status; as label) {
+  <span
+    class="flex shrink-0 items-center gap-1 text-small"
+    [class]="state().failed ? 'text-lost-text' : 'text-ink-muted'"
+  >
+    @if (state().scanning) {
+      <span
+        class="block size-4 shrink-0 animate-loader rounded-full border-2 border-line border-t-ink motion-reduce:animate-none"
+        aria-hidden="true"
+      ></span>
+    }
+    {{ label }}
+  </span>
+}
+@if (removable()) {
+  <button
+    type="button"
+    appButton="icon"
+    size="small"
+    class="z-10 shrink-0"
+    [attr.aria-label]="copy.REMOVE(document().name)"
+    (click)="remove.emit(document())"
+  >
+    <lucide-icon
+      name="x"
+      class="block size-4"
+      [size]="16"
+      [strokeWidth]="1.5"
+      [absoluteStrokeWidth]="true"
+      aria-hidden="true"
+    />
+  </button>
+}

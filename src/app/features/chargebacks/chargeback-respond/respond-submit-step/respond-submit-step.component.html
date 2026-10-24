@@ -2,41 +2,19 @@
 
 <dl class="flex flex-col divide-y divide-line rounded-md border border-line">
   @for (section of sections(); track section.key) {
-    <div class="flex items-center gap-3 p-3" [attr.data-section]="section.key">
+    <div class="flex items-center gap-3 px-4 py-3" [attr.data-section]="section.key">
       <div class="min-w-0 flex-1">
         <dt class="text-small text-ink-muted">{{ section.title }}</dt>
         @if (section.key === 'documents') {
           <dd>
-            <ul class="mt-1 flex flex-col">
+            <ul class="mt-1 flex flex-col items-start">
               @for (file of files(); track file.document.id) {
-                <li class="flex min-w-0 items-center gap-2">
-                  <span class="shrink-0 text-ink-subtle" aria-hidden="true">
-                    <lucide-icon
-                      class="block size-4"
-                      [name]="file.icon"
-                      [size]="16"
-                      [strokeWidth]="1.5"
-                      [absoluteStrokeWidth]="true"
-                    />
-                  </span>
-                  @if (file.canOpen) {
-                    <button
-                      type="button"
-                      class="-ml-1 inline-flex h-8 min-w-0 items-center rounded-md px-1 text-left text-ink transition-[background-color] duration-200 ease-in-out hover:bg-hover active:bg-pressed pointer-coarse:h-11"
-                      (click)="preview(file.document)"
-                    >
-                      <span class="truncate" [title]="file.document.name">{{
-                        file.document.name
-                      }}</span>
-                    </button>
-                  } @else {
-                    <span class="min-w-0 truncate text-ink-muted" [title]="file.document.name">{{
-                      file.document.name
-                    }}</span>
-                  }
-                  <span class="shrink-0 text-small text-ink-muted tabular-nums"
-                    >{{ file.type }} · {{ file.size }}</span
-                  >
+                <li class="max-w-full">
+                  <app-document-chip
+                    [document]="file.document"
+                    [details]="file.details"
+                    (open)="preview($event)"
+                  />
                 </li>
               }
             </ul>

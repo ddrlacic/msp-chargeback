@@ -7,7 +7,6 @@ import {
 } from '../../../../services/chargeback/chargeback.types';
 import { getStatusState, isNeedsAction } from '../../../../services/chargeback/chargeback.utils';
 import { formatDate, formatDateAtTime } from '../../../../shared/utils/date.utils';
-import { isImageFile } from '../../../../shared/utils/file.utils';
 import { formatMoney } from '../../../../shared/utils/money.utils';
 import {
   CARD_NETWORK_LABELS,
@@ -31,20 +30,13 @@ export interface PendingRow {
   readonly action?: PendingAction;
 }
 
-export interface TimelineDocument {
-  readonly document: ChargebackDocument;
-  readonly icon: 'file-image' | 'file-text';
-  readonly label: string;
-  readonly canOpen: boolean;
-}
-
 export interface TimelineRow {
   readonly id: string;
   readonly title: string;
   readonly meta: string;
   readonly description?: string;
   readonly money?: string;
-  readonly documents: readonly TimelineDocument[];
+  readonly documents: readonly ChargebackDocument[];
   readonly date: string;
   readonly occurredAt: string;
   readonly tone: MarkerTone;
@@ -145,18 +137,9 @@ function getEventMoney(chargeback: ChargebackCase, event: TimelineEvent): string
 function getEventDocuments(
   chargeback: ChargebackCase,
   event: TimelineEvent,
-): readonly TimelineDocument[] {
-  const documents: TimelineDocument[] = [];
-  for (const id of event.documentIds ?? []) {
+): readonly ChargebackDocument[] {
+  return (event.documentIds ?? []).flatMap((id) => {
     const document = chargeback.documents.find((item) => item.id === id);
-    if (document) {
-      documents.push({
-        document,
-        icon: isImageFile(document.name) ? 'file-image' : 'file-text',
-        label: copy.PREVIEW(document.name),
-        canOpen: document.securityStatus === 'clean',
-      });
-    }
-  }
-  return documents;
+    return document ? [document] : [];
+  });
 }

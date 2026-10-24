@@ -4,13 +4,13 @@ export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'invisible
 export type ButtonSize = 'default' | 'small';
 
 const BASE =
-  'relative inline-flex shrink-0 items-center justify-center rounded-md whitespace-nowrap transition-[background-color,box-shadow,color] duration-200 ease-in-out disabled:cursor-not-allowed';
+  'relative inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-[background-color,box-shadow,color] duration-200 ease-in-out disabled:cursor-not-allowed';
 
 const SIZES: Record<ButtonSize, string> = {
   default:
-    'h-control gap-1 px-3 font-semibold after:absolute after:inset-x-0 after:-inset-y-0.5 pointer-coarse:after:-inset-y-1',
+    'h-control gap-1 rounded-md px-3 font-semibold after:absolute after:inset-x-0 after:-inset-y-0.5 pointer-coarse:after:-inset-y-1',
   small:
-    'h-7 gap-1 px-2.5 font-semibold after:absolute after:inset-x-0 after:-inset-y-1.5 pointer-coarse:after:-inset-y-2',
+    'h-7 gap-1 rounded-md px-2.5 font-semibold after:absolute after:inset-x-0 after:-inset-y-1.5 pointer-coarse:after:-inset-y-2',
 };
 
 const VARIANTS: Record<ButtonVariant, string> = {
@@ -25,8 +25,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
 };
 
 const ICON_SIZES: Record<ButtonSize, string> = {
-  default: 'size-8 after:absolute after:-inset-1 pointer-coarse:after:-inset-1.5',
-  small: 'size-6 after:absolute after:-inset-2 pointer-coarse:after:-inset-2.5',
+  default: 'size-8 rounded-md after:absolute after:-inset-1 pointer-coarse:after:-inset-1.5',
+  small: 'size-6 rounded-sm after:absolute after:-inset-2 pointer-coarse:after:-inset-2.5',
 };
 
 @Directive({

@@ -9,7 +9,7 @@
         [absoluteStrokeWidth]="true"
       />
     </span>
-    <div class="min-w-0 flex-1">
+    <div class="min-w-0 max-w-prose flex-1">
       <h2 class="text-body font-semibold text-pretty text-ink" [id]="titleId">
         {{ banner().title }}
       </h2>
@@ -53,7 +53,7 @@
     <div
       class="flex flex-col gap-4 rounded-b-md border border-t-0 border-overlay-10 bg-white py-4 pr-4 pl-12"
     >
-      <figure>
+      <figure class="max-w-prose">
         <figcaption class="font-semibold text-ink">{{ note.title }}</figcaption>
         <blockquote class="text-pretty text-ink">{{ note.text }}</blockquote>
       </figure>

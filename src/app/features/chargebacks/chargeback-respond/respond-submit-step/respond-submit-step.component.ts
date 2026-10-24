@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, inject, output } from '@a
 import { LucideAngularModule } from 'lucide-angular';
 
 import { ChargebackDocument } from '../../../../services/chargeback/chargeback.types';
-import { formatFileSize, isImageFile } from '../../../../shared/utils/file.utils';
+import { formatFileSize } from '../../../../shared/utils/file.utils';
 import { formatMoney } from '../../../../shared/utils/money.utils';
 import {
   CHALLENGE_REASON_COPY,
   CHARGEBACK_DOCUMENT_TYPE_LABELS,
   CHARGEBACKS_CONSTANTS,
 } from '../../chargebacks.constants';
+import { DocumentChipComponent } from '../../shared/document-chip/document-chip.component';
 import { ChargebackRespondFlow } from '../chargeback-respond.flow';
 import { RespondStep } from '../chargeback-respond.utils';
 
@@ -16,7 +17,7 @@ type SectionKey = 'reason' | 'amount' | 'documents' | 'note';
 
 @Component({
   selector: 'app-respond-submit-step',
-  imports: [LucideAngularModule],
+  imports: [DocumentChipComponent, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './respond-submit-step.component.html',
   host: { class: 'flex flex-col gap-6' },
@@ -93,10 +94,7 @@ export class RespondSubmitStepComponent {
   private toFile(document: ChargebackDocument) {
     return {
       document,
-      type: CHARGEBACK_DOCUMENT_TYPE_LABELS[document.type],
-      size: formatFileSize(document.sizeBytes),
-      icon: isImageFile(document.name) ? 'file-image' : 'file-text',
-      canOpen: document.securityStatus === 'clean',
+      details: `${CHARGEBACK_DOCUMENT_TYPE_LABELS[document.type]} · ${formatFileSize(document.sizeBytes)}`,
     };
   }
 }
